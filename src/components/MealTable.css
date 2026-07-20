@@ -1,0 +1,92 @@
+.meal-table-wrapper {
+    overflow-x: auto;
+    border-radius: 12px;
+    border: 1px solid var(--color-border);
+}
+
+.meal-table {
+    display: grid;
+    grid-template-columns: 110px repeat(var(--day-count), minmax(180px, 1fr));
+    min-width: calc(110px + var(--day-count) * 180px);
+}
+
+/* Header row */
+.meal-table__corner {
+    background: var(--color-surface);
+    position: sticky;
+    left: 0;
+    z-index: 3;
+    border-bottom: 1px solid var(--color-border);
+    border-right: 1px solid var(--color-border);
+}
+
+.meal-table__day-header {
+    background: var(--color-surface);
+    padding: 14px 16px;
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: var(--color-text);
+    text-align: center;
+    text-transform: uppercase;
+    letter-spacing: 0.07em;
+    border-bottom: 1px solid var(--color-border);
+    border-right: 1px solid var(--color-border);
+}
+
+.meal-table__day-header:last-child {
+    border-right: none;
+}
+
+/* Row label */
+.meal-table__row-label {
+    position: sticky;
+    left: 0;
+    z-index: 2;
+    background: var(--color-surface);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 16px 10px;
+    font-size: 0.8rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.07em;
+    color: var(--color-accent);
+    border-bottom: 1px solid var(--color-border);
+    border-right: 1px solid var(--color-border);
+    writing-mode: vertical-rl;
+    text-orientation: mixed;
+    transform: rotate(180deg);
+}
+
+/* Cells */
+.meal-table__cell {
+    padding: 12px;
+    border-bottom: 1px solid var(--color-border);
+    border-right: 1px solid var(--color-border);
+    background: var(--color-bg);
+}
+
+.meal-table__cell:last-child {
+    border-right: none;
+}
+
+/* Snack row styling */
+.meal-table__row-label--snack {
+    color: var(--color-text-dim);
+    font-size: 0.7rem;
+}
+
+.meal-table__cell--snack {
+    background: color-mix(
+        in srgb,
+        var(--color-bg) 60%,
+        var(--color-surface) 40%
+    );
+}
+
+/* Remove bottom border from last row */
+.meal-table__row-label:last-of-type,
+.meal-table__cell:nth-last-child(-n + 8) {
+    border-bottom: none;
+}

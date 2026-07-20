@@ -1,0 +1,349 @@
+.modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.75);
+    backdrop-filter: blur(3px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 100;
+    padding: 20px;
+    animation: fadeIn 0.15s ease;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
+}
+
+.modal-card {
+    display: flex;
+    flex-direction: column;
+    position: relative;
+    background: var(--color-card);
+    border: 1px solid var(--color-border);
+    border-radius: 14px;
+    padding: 28px 32px 32px;
+    width: 100%;
+    max-width: 600px;
+    max-height: 90vh;
+    overflow-y: auto;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.6);
+    animation: slideUp 0.2s ease;
+}
+
+@keyframes slideUp {
+    from {
+        transform: translateY(16px);
+        opacity: 0;
+    }
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+
+.modal-close {
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    color: var(--color-text);
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    font-size: 1.4rem;
+    line-height: 1;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition:
+        background 0.15s,
+        color 0.15s;
+    flex-shrink: 0;
+}
+
+.modal-close:hover {
+    background: var(--color-accent);
+    border-color: var(--color-accent);
+    color: #fff;
+}
+
+/* Action bar (replaces single close button) */
+.modal-actions {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 8px;
+    margin-bottom: 20px;
+    flex-shrink: 0;
+}
+
+.modal-btn {
+    border: 1px solid var(--color-border);
+    border-radius: 8px;
+    padding: 6px 14px;
+    font-size: 0.82rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition:
+        background 0.15s,
+        color 0.15s,
+        border-color 0.15s;
+}
+
+.modal-btn--edit {
+    background: var(--color-surface);
+    color: var(--color-text);
+}
+
+.modal-btn--edit:hover {
+    background: var(--color-accent);
+    border-color: var(--color-accent);
+    color: #fff;
+}
+
+.modal-btn--save {
+    background: var(--color-accent);
+    border-color: var(--color-accent);
+    color: #fff;
+}
+
+.modal-btn--save:hover {
+    opacity: 0.85;
+}
+
+.modal-btn--cancel {
+    background: var(--color-surface);
+    color: var(--color-text-muted);
+}
+
+.modal-btn--cancel:hover {
+    background: var(--color-border);
+}
+
+.modal-header {
+    margin-bottom: 24px;
+}
+
+.modal-title {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--color-text);
+    margin: 0 0 8px;
+}
+
+.modal-description {
+    font-size: 0.95rem;
+    color: var(--color-text-muted);
+    margin: 0;
+    line-height: 1.6;
+}
+
+.modal-macros {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 10px;
+    margin-bottom: 28px;
+}
+
+@media (max-width: 480px) {
+    .modal-macros {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+.macro-badge {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: 10px;
+    padding: 14px 10px;
+}
+
+.macro-badge__icon {
+    font-size: 1.4rem;
+}
+
+.macro-badge__value {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: var(--color-accent);
+}
+
+.macro-badge__label {
+    font-size: 0.72rem;
+    color: var(--color-text-dim);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.modal-section {
+    margin-bottom: 24px;
+}
+
+.modal-section__title {
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--color-accent);
+    margin: 0 0 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+}
+
+.modal-ingredients {
+    list-style: disc;
+    padding-left: 20px;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.modal-ingredients li,
+.modal-procedure li {
+    color: var(--color-text-muted);
+    font-size: 0.92rem;
+    line-height: 1.5;
+}
+
+.modal-procedure {
+    list-style: decimal;
+    padding-left: 20px;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.modal-procedure li {
+    padding-left: 4px;
+}
+
+/* Edit mode inputs */
+.modal-input {
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: 8px;
+    color: var(--color-text);
+    font-size: 0.92rem;
+    padding: 8px 12px;
+    width: 100%;
+    box-sizing: border-box;
+    font-family: inherit;
+    transition: border-color 0.15s;
+    resize: vertical;
+}
+
+.modal-input:focus {
+    outline: none;
+    border-color: var(--color-accent);
+}
+
+.modal-input--title {
+    font-size: 1.3rem;
+    font-weight: 700;
+    margin-bottom: 8px;
+}
+
+.modal-input--description {
+    color: var(--color-text-muted);
+    line-height: 1.5;
+    resize: none;
+}
+
+.modal-input--step {
+    resize: none;
+    line-height: 1.5;
+}
+
+/* Macro badge edit input */
+.macro-badge__input {
+    background: var(--color-bg);
+    border: 1px solid var(--color-border);
+    border-radius: 6px;
+    color: var(--color-accent);
+    font-size: 1rem;
+    font-weight: 700;
+    width: 72px;
+    text-align: center;
+    padding: 4px 6px;
+    font-family: inherit;
+}
+
+.macro-badge__input:focus {
+    outline: none;
+    border-color: var(--color-accent);
+}
+
+/* Editable list rows */
+.modal-edit-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.modal-edit-list__row {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+}
+
+.modal-edit-list__step-num {
+    color: var(--color-text-dim);
+    font-size: 0.85rem;
+    padding-top: 10px;
+    min-width: 20px;
+    text-align: right;
+    flex-shrink: 0;
+}
+
+.modal-edit-list__remove {
+    background: transparent;
+    border: 1px solid var(--color-border);
+    color: var(--color-text-dim);
+    border-radius: 6px;
+    width: 28px;
+    height: 28px;
+    font-size: 1rem;
+    cursor: pointer;
+    flex-shrink: 0;
+    margin-top: 6px;
+    transition:
+        background 0.15s,
+        color 0.15s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.modal-edit-list__remove:hover {
+    background: var(--color-accent);
+    border-color: var(--color-accent);
+    color: #fff;
+}
+
+.modal-add-btn {
+    background: transparent;
+    border: 1px dashed var(--color-border);
+    color: var(--color-text-muted);
+    border-radius: 8px;
+    padding: 7px 14px;
+    font-size: 0.82rem;
+    cursor: pointer;
+    transition:
+        border-color 0.15s,
+        color 0.15s;
+    text-align: left;
+}
+
+.modal-add-btn:hover {
+    border-color: var(--color-accent);
+    color: var(--color-accent);
+}
