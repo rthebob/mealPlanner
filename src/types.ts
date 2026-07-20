@@ -5,6 +5,8 @@ export interface Macros {
   fat: number; // grams
 }
 
+export type MacroGoals = Macros;
+
 export interface Meal {
   id: string;
   name: string;
@@ -23,3 +25,6 @@ export interface DayPlan {
   afternoonSnack: Meal | null;
   dinner: Meal | null;
 }
+
+// History: keyed by ISO week string e.g. "2025-W28"
+export type WeekHistory = Record<string, DayPlan[]>;

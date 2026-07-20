@@ -192,6 +192,49 @@ body {
     background: var(--color-surface);
 }
 
+/* Goals editor inside settings dropdown */
+.app-settings-goals {
+    padding: 6px 14px 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.app-settings-goals__row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+}
+
+.app-settings-goals__label {
+    font-size: 0.82rem;
+    color: var(--color-text-muted);
+    white-space: nowrap;
+}
+
+.app-settings-goals__input {
+    background: var(--color-bg);
+    border: 1px solid var(--color-border);
+    border-radius: 6px;
+    color: var(--color-text);
+    font-size: 0.85rem;
+    font-family: inherit;
+    width: 80px;
+    padding: 4px 8px;
+    text-align: right;
+}
+
+.app-settings-goals__input:focus {
+    outline: none;
+    border-color: var(--color-accent);
+}
+
+.app-settings-goals__save {
+    align-self: flex-end;
+    margin-top: 4px;
+}
+
 /* ── Main Content ──────────────────────────────────────── */
 .app-main {
     flex: 1;
@@ -204,11 +247,11 @@ body {
     gap: 24px;
 }
 
-/* ── Controls Row ──────────────────────────────────────── */
+/* ── Controls Row ─────────────────────────────────── */
 .app-controls {
     display: flex;
     align-items: center;
-    gap: 16px;
+    gap: 8px;
     flex-wrap: wrap;
 }
 
@@ -240,7 +283,111 @@ body {
     background: var(--color-accent);
 }
 
-/* ── Responsive ────────────────────────────────────────── */
+/* ── History navigation banner ───────────────────── */
+.history-nav-banner {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: color-mix(
+        in srgb,
+        var(--color-surface) 70%,
+        var(--color-accent) 30%
+    );
+    border: 1px solid var(--color-accent);
+    border-radius: 10px;
+    padding: 10px 18px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--color-text);
+    gap: 12px;
+    flex-wrap: wrap;
+}
+
+/* ── Week nav arrows (standalone, sit directly in app-controls) ── */
+.week-nav__arrow {
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: 8px;
+    color: var(--color-text-muted);
+    font-size: 1.1rem;
+    line-height: 1;
+    width: 34px;
+    height: 34px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition:
+        color 0.15s,
+        background 0.15s,
+        border-color 0.15s;
+    flex-shrink: 0;
+}
+
+.week-nav__arrow:hover:not(:disabled) {
+    color: var(--color-accent);
+    border-color: var(--color-accent);
+}
+
+.week-nav__arrow:disabled {
+    opacity: 0.25;
+    cursor: default;
+}
+
+.week-nav__label-text {
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--color-text-muted);
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: 6px;
+    padding: 4px 12px;
+    white-space: nowrap;
+    height: 34px;
+    display: flex;
+    align-items: center;
+}
+
+.week-nav__label-text--current {
+    color: var(--color-accent);
+    border-color: var(--color-accent);
+}
+
+/* ── View toggle (Week / Day) ───────────────────── */
+.view-toggle {
+    display: flex;
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: 20px;
+    overflow: hidden;
+    flex-shrink: 0;
+}
+
+.view-toggle__btn {
+    background: transparent;
+    border: none;
+    color: var(--color-text-muted);
+    font-size: 0.85rem;
+    font-weight: 500;
+    font-family: inherit;
+    padding: 7px 18px;
+    cursor: pointer;
+    transition:
+        background 0.15s,
+        color 0.15s;
+}
+
+.view-toggle__btn--active {
+    background: var(--color-accent);
+    color: #fff;
+    font-weight: 600;
+}
+
+.view-toggle__btn:not(.view-toggle__btn--active):hover {
+    color: var(--color-text);
+}
+
+/* ── Responsive ───────────────────────────────────────── */
 @media (max-width: 600px) {
     .app-title {
         font-size: 1.5rem;

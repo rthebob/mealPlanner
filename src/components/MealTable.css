@@ -1,3 +1,24 @@
+.meal-table-outer {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.meal-table-readonly-banner {
+    background: color-mix(
+        in srgb,
+        var(--color-surface) 60%,
+        var(--color-accent) 40%
+    );
+    border: 1px solid var(--color-accent);
+    border-radius: 8px;
+    padding: 9px 16px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--color-text);
+    text-align: center;
+}
+
 .meal-table-wrapper {
     overflow-x: auto;
     border-radius: 12px;
@@ -85,8 +106,75 @@
     );
 }
 
-/* Remove bottom border from last row */
-.meal-table__row-label:last-of-type,
-.meal-table__cell:nth-last-child(-n + 8) {
+/* Totals row */
+.meal-table__row-label--total {
+    color: var(--color-text-muted);
+    font-size: 0.72rem;
+    background: var(--color-surface);
     border-bottom: none;
+}
+
+.meal-table__cell--totals {
+    background: color-mix(
+        in srgb,
+        var(--color-bg) 40%,
+        var(--color-surface) 60%
+    );
+    border-bottom: none;
+    padding: 14px 12px;
+}
+
+.meal-table__cell--totals:last-child {
+    border-right: none;
+}
+
+/* ── DayTotals / mini donuts ── */
+
+/* Track colour adapts to theme */
+:root {
+    --donut-track: rgba(255, 255, 255, 0.1);
+}
+[data-theme="light"] {
+    --donut-track: rgba(0, 0, 0, 0.1);
+}
+
+.day-totals {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    justify-content: space-around;
+}
+
+/* One donut widget */
+.mini-donut {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+    flex: 1 1 64px;
+    min-width: 60px;
+}
+
+.mini-donut__label {
+    font-size: 0.7rem;
+    font-weight: 600;
+    color: var(--color-text-muted);
+    text-align: center;
+    white-space: nowrap;
+}
+
+.mini-donut__value {
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: var(--color-text);
+    margin-top: 2px;
+}
+
+.mini-donut__value--over {
+    color: var(--color-accent);
+}
+
+.mini-donut__goal {
+    font-size: 0.7rem;
+    color: var(--color-text-dim);
 }

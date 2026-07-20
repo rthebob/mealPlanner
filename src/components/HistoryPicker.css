@@ -1,0 +1,116 @@
+.history-card {
+  max-width: 520px;
+}
+
+.history-empty {
+  color: var(--color-text-muted);
+  font-size: 0.9rem;
+  text-align: center;
+  padding: 24px 0;
+  margin: 0;
+}
+
+.history-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  max-height: 60vh;
+  overflow-y: auto;
+}
+
+/* Year group */
+.history-year__toggle {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  padding: 10px 14px;
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--color-text);
+  cursor: pointer;
+  font-family: inherit;
+  transition: background 0.15s;
+}
+
+.history-year__toggle:hover {
+  background: color-mix(in srgb, var(--color-surface) 70%, var(--color-accent) 30%);
+}
+
+.history-year__count {
+  font-size: 0.78rem;
+  font-weight: 400;
+  color: var(--color-text-dim);
+}
+
+.history-year__chevron {
+  margin-left: auto;
+  font-size: 0.75rem;
+  color: var(--color-text-dim);
+}
+
+/* Weeks inside a year */
+.history-weeks {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding-left: 12px;
+  margin-top: 4px;
+}
+
+.history-week-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  background: var(--color-card);
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  padding: 10px 14px;
+  cursor: pointer;
+  font-family: inherit;
+  color: var(--color-text);
+  transition: border-color 0.15s, background 0.15s;
+}
+
+.history-week-item:hover {
+  border-color: var(--color-accent);
+  background: color-mix(in srgb, var(--color-card) 80%, var(--color-accent) 20%);
+}
+
+.history-week-item__left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.history-week-item__num {
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: var(--color-accent);
+  min-width: 28px;
+}
+
+.history-week-item__range {
+  font-size: 0.88rem;
+  color: var(--color-text-muted);
+}
+
+.history-week-item__right {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.history-week-item__days {
+  font-size: 0.78rem;
+  color: var(--color-text-dim);
+}
+
+.history-week-item__arrow {
+  font-size: 1rem;
+  color: var(--color-text-dim);
+}

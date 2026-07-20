@@ -25,6 +25,7 @@ export function SlotPicker({
   onCreateNew,
 }: SlotPickerProps) {
   const [search, setSearch] = useState("");
+  const [confirmClear, setConfirmClear] = useState(false);
 
   const filtered = library.filter((m) =>
     m.name.toLowerCase().includes(search.toLowerCase()),
@@ -75,12 +76,35 @@ export function SlotPicker({
                 >
                   {T.editMeal}
                 </button>
-                <button
-                  className="modal-btn modal-btn--cancel"
-                  onClick={onClear}
-                >
-                  {T.remove}
-                </button>
+                {confirmClear ? (
+                  <span className="library-item__confirm">
+                    <span className="library-item__confirm-label">
+                      {T.confirmRemove}
+                    </span>
+                    <button
+                      className="modal-btn modal-btn--save library-item__confirm-yes"
+                      onClick={() => {
+                        setConfirmClear(false);
+                        onClear();
+                      }}
+                    >
+                      {T.confirmYes}
+                    </button>
+                    <button
+                      className="modal-btn modal-btn--cancel"
+                      onClick={() => setConfirmClear(false)}
+                    >
+                      {T.confirmNo}
+                    </button>
+                  </span>
+                ) : (
+                  <button
+                    className="modal-btn modal-btn--cancel"
+                    onClick={() => setConfirmClear(true)}
+                  >
+                    {T.remove}
+                  </button>
+                )}
               </div>
             </div>
           </div>

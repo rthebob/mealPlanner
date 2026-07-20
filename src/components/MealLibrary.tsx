@@ -185,6 +185,7 @@ function MealForm({ initial, onSave, onCancel }: MealFormProps) {
 export function MealLibrary({ library, onClose, onChange }: MealLibraryProps) {
   const [showNewForm, setShowNewForm] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
+  const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
 
   function handleAdd(meal: Meal) {
     onChange([...library, meal]);
@@ -260,18 +261,44 @@ export function MealLibrary({ library, onClose, onChange }: MealLibraryProps) {
                     <div className="library-item__actions">
                       <button
                         className="modal-btn modal-btn--edit"
-                        onClick={() => setEditingId(meal.id)}
+                        onClick={() => {
+                          setEditingId(meal.id);
+                          setConfirmDeleteId(null);
+                        }}
                         aria-label={T.editMeal}
                       >
                         {T.editMealBtn}
                       </button>
-                      <button
-                        className="modal-btn modal-btn--cancel"
-                        onClick={() => handleDelete(meal.id)}
-                        aria-label="Smazat"
-                      >
-                        {T.deleteMealBtn}
-                      </button>
+                      {confirmDeleteId === meal.id ? (
+                        <span className="library-item__confirm">
+                          <span className="library-item__confirm-label">
+                            {T.confirmDelete}
+                          </span>
+                          <button
+                            className="modal-btn modal-btn--save library-item__confirm-yes"
+                            onClick={() => {
+                              handleDelete(meal.id);
+                              setConfirmDeleteId(null);
+                            }}
+                          >
+                            {T.confirmYes}
+                          </button>
+                          <button
+                            className="modal-btn modal-btn--cancel"
+                            onClick={() => setConfirmDeleteId(null)}
+                          >
+                            {T.confirmNo}
+                          </button>
+                        </span>
+                      ) : (
+                        <button
+                          className="modal-btn modal-btn--cancel"
+                          onClick={() => setConfirmDeleteId(meal.id)}
+                          aria-label="Smazat"
+                        >
+                          {T.deleteMealBtn}
+                        </button>
+                      )}
                     </div>
                   </>
                 )}

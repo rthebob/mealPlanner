@@ -55,7 +55,42 @@ export const T = {
   invalidFile:
     "Neplatný soubor. Vyberte prosím platný soubor meal-planner.json.",
 
-  // Theme toggle
+  // Confirm delete
+  confirmDelete: "Opravdu smazat?",
+  confirmYes: "✓",
+  confirmNo: "✗",
+  confirmRemove: "Opravdu odebrat?",
+
+  // Macro goals (settings)
+  goalsTitle: "Denní cíle maker",
+  goalCalories: "Kalorie (kcal)",
+  goalProtein: "Bílkoviny (g)",
+  goalCarbs: "Sacharidy (g)",
+  goalFat: "Tuky (g)",
+  goalsSaved: "Cíle uloženy",
+  totalRow: "Celkem",
+
+  // Day picker
+  viewWeek: "Týden",
+  viewDay: "Den",
+  todayBtn: "Dnes",
+  nextDay: "Následující den",
+
+  prevWeek: "«",
+  nextWeek: "»",
+  prevWeekLabel: "Předchozí týden",
+  nextWeekLabel: "Následující týden",
+  currentWeekLabel: "Aktuální týden",
+
+  // History / calendar
+  saveWeek: "Uložit týden",
+  historyBtn: "📅 Historie",
+  historyTitle: "Historie týdnů",
+  readOnlyBanner: "Zobrazujete uloženou historii — pouze pro čtení",
+  backToCurrent: "← Aktuální týden",
+  noSavedWeeks: "Zatím nejsou žádné uložené týdny.",
+  weekLabel: (key: string) => `Týden ${key}`,
+
   lightMode: "☀️",
   darkMode: "🌙",
 
