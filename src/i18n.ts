@@ -74,6 +74,7 @@ export const T = {
   viewWeek: "Týden",
   viewDay: "Den",
   todayBtn: "Dnes",
+  prevDay: "Předchozí den",
   nextDay: "Následující den",
 
   prevWeek: "«",
