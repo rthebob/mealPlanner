@@ -5,7 +5,16 @@ import { T } from "../i18n";
 import "./BasketQRModal.css";
 
 interface BasketPayload {
-  entries: { mealId: string; mealName: string; serves: number }[];
+  entries: {
+    meal: {
+      id: string;
+      name: string;
+      serves: number;
+      ingredients: import("../types").Ingredient[];
+      macros: import("../types").Macros;
+    };
+    serves: number;
+  }[];
   adHocItems: AdHocItem[];
 }
 
@@ -26,7 +35,9 @@ export default function BasketQRModal({
 }: BasketQRModalProps) {
   const [tab, setTab] = useState<Tab>("share");
   const [qrDataUrl, setQrDataUrl] = useState<string>("");
-  const [decodeStatus, setDecodeStatus] = useState<"idle" | "success" | "error">("idle");
+  const [decodeStatus, setDecodeStatus] = useState<
+    "idle" | "success" | "error"
+  >("idle");
   const [decodeMessage, setDecodeMessage] = useState("");
   const [cameraActive, setCameraActive] = useState(false);
   const [cameraError, setCameraError] = useState("");
@@ -38,20 +49,27 @@ export default function BasketQRModal({
   useEffect(() => {
     const payload: BasketPayload = {
       entries: entries.map(({ meal, serves }) => ({
-        mealId: meal.id,
-        mealName: meal.name,
+        meal: {
+          id: meal.id,
+          name: meal.name,
+          serves: meal.serves,
+          ingredients: meal.ingredients,
+          macros: meal.macros,
+        },
         serves,
       })),
       adHocItems,
     };
     const json = JSON.stringify(payload);
     QRCode.toDataURL(json, {
-      errorCorrectionLevel: "M",
-      width: 280,
+      errorCorrectionLevel: "L",
+      width: 300,
       margin: 2,
     })
       .then(setQrDataUrl)
-      .catch(() => setQrDataUrl(""));
+      .catch(() => {
+        setQrDataUrl("too-large");
+      });
   }, [entries, adHocItems]);
 
   // Stop camera when closing or switching tabs
@@ -147,16 +165,10 @@ export default function BasketQRModal({
       ) {
         throw new Error("invalid");
       }
-      // Build ShoppingListEntry stubs — only mealId/mealName/serves are in QR
-      // We hand them back as "stub" meals; App can map real meal objects if available.
       const loadedEntries: ShoppingListEntry[] = payload.entries.map((e) => ({
         meal: {
-          id: e.mealId,
-          name: e.mealName,
-          serves: e.serves,
-          ingredients: [],
+          ...e.meal,
           procedure: [],
-          macros: { calories: 0, protein: 0, carbohydrates: 0, fat: 0 },
         },
         serves: e.serves,
       }));
@@ -191,13 +203,20 @@ export default function BasketQRModal({
         <div className="basket-qr__tabs">
           <button
             className={`basket-qr__tab${tab === "share" ? " basket-qr__tab--active" : ""}`}
-            onClick={() => { setTab("share"); stopCamera(); }}
+            onClick={() => {
+              setTab("share");
+              stopCamera();
+            }}
           >
             {T.qrShareTab}
           </button>
           <button
             className={`basket-qr__tab${tab === "load" ? " basket-qr__tab--active" : ""}`}
-            onClick={() => { setTab("load"); stopCamera(); setDecodeStatus("idle"); }}
+            onClick={() => {
+              setTab("load");
+              stopCamera();
+              setDecodeStatus("idle");
+            }}
           >
             {T.qrLoadTab}
           </button>
@@ -208,6 +227,10 @@ export default function BasketQRModal({
             <>
               {!hasContent ? (
                 <p className="shopping-empty">{T.qrEmptyBasket}</p>
+              ) : qrDataUrl === "too-large" ? (
+                <p className="basket-qr__status basket-qr__status--error">
+                  {T.qrTooLarge}
+                </p>
               ) : qrDataUrl ? (
                 <>
                   <p className="basket-qr__hint">{T.qrShareHint}</p>

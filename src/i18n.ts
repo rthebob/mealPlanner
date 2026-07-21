@@ -134,6 +134,7 @@ export const T = {
   qrEmptyBasket: "Košík je prázdný — nejsou co sdílet.",
   qrGenerating: "Generuji QR kód…",
   qrDownload: "⬇ Stáhnout QR",
+  qrTooLarge: "Košík je příliš velký pro QR kód — zkuste snížit počet položek.",
   qrLoadHint: "Naskenujte QR kód z košíku nebo nahrajte obrázek.",
   qrScanCamera: "📷 Skenovat kamerou",
   qrStopCamera: "✕ Zastavit kameru",
