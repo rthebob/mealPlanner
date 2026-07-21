@@ -1,5 +1,6 @@
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import LibraryQRModal from "./LibraryQRModal";
+import Portal from "./Portal";
 import type { Meal, Macros, Ingredient, MealType } from "../types";
 import { T } from "../i18n";
 import { MealModal } from "./MealModal";
@@ -327,6 +328,29 @@ export function MealLibrary({
     editMode: boolean;
   } | null>(null);
   const [libraryQR, setLibraryQR] = useState<{ meals: Meal[] } | null>(null);
+  const [showShareDropdown, setShowShareDropdown] = useState(false);
+  const shareTriggerRef = useRef<HTMLButtonElement>(null);
+  const [menuPos, setMenuPos] = useState<{ top: number; right: number } | null>(
+    null,
+  );
+
+  const menuRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!showShareDropdown) return;
+    function handleClickOutside(e: MouseEvent) {
+      if (
+        shareTriggerRef.current &&
+        !shareTriggerRef.current.contains(e.target as Node) &&
+        menuRef.current &&
+        !menuRef.current.contains(e.target as Node)
+      ) {
+        setShowShareDropdown(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [showShareDropdown]);
 
   function handleAdd(meal: Meal) {
     onChange([...library, meal]);
@@ -359,14 +383,57 @@ export function MealLibrary({
       >
         <div className="modal-actions">
           <h2 className="library-title">{T.mealLibrary}</h2>
-          <button
-            className="modal-btn modal-btn--edit"
-            style={{ fontSize: "0.8rem", padding: "4px 10px" }}
-            onClick={() => setLibraryQR({ meals: library })}
-            title={T.shareLibrary}
-          >
-            {T.shareLibrary}
-          </button>
+          <div className="library-share-dropdown">
+            <button
+              ref={shareTriggerRef}
+              className="modal-btn modal-btn--edit library-share-dropdown__trigger"
+              onClick={() => {
+                if (!showShareDropdown && shareTriggerRef.current) {
+                  const r = shareTriggerRef.current.getBoundingClientRect();
+                  setMenuPos({
+                    top: r.bottom + 6,
+                    right: window.innerWidth - r.right,
+                  });
+                }
+                setShowShareDropdown((v) => !v);
+              }}
+              title={T.shareLibrary}
+            >
+              {T.shareLibrary} ▾
+            </button>
+            {showShareDropdown && menuPos && (
+              <Portal>
+                <div
+                  ref={menuRef}
+                  className="library-share-dropdown__menu"
+                  style={{ top: menuPos.top, right: menuPos.right }}
+                >
+                  <button
+                    className="library-share-dropdown__item"
+                    onClick={() => {
+                      setLibraryQR({ meals: library });
+                      setShowShareDropdown(false);
+                    }}
+                  >
+                    {T.shareLibraryAll}
+                  </button>
+                  <div className="library-share-dropdown__divider" />
+                  {library.map((meal) => (
+                    <button
+                      key={meal.id}
+                      className="library-share-dropdown__item"
+                      onClick={() => {
+                        setLibraryQR({ meals: [meal] });
+                        setShowShareDropdown(false);
+                      }}
+                    >
+                      {meal.name}
+                    </button>
+                  ))}
+                </div>
+              </Portal>
+            )}
+          </div>
           <button className="modal-close" onClick={onClose} aria-label="Zavřít">
             ×
           </button>
@@ -592,7 +659,6 @@ export function MealLibrary({
           meal={viewingMeal.meal}
           initialEditMode={viewingMeal.editMode}
           onClose={() => setViewingMeal(null)}
-          onShare={(meal) => setLibraryQR({ meals: [meal] })}
           onSave={(updated) => {
             onChange(library.map((m) => (m.id === updated.id ? updated : m)));
             setViewingMeal((prev) =>

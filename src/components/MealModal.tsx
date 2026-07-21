@@ -8,7 +8,6 @@ interface MealModalProps {
   onClose: () => void;
   onSave: (updated: Meal) => void;
   initialEditMode?: boolean;
-  onShare?: (meal: Meal) => void;
 }
 
 function emptyIngredient(): Ingredient {
@@ -27,7 +26,6 @@ export function MealModal({
   onClose,
   onSave,
   initialEditMode,
-  onShare,
 }: MealModalProps) {
   const [isEditing, setIsEditing] = useState(initialEditMode ?? false);
   const [draft, setDraft] = useState<Meal>({
@@ -455,15 +453,6 @@ export function MealModal({
             >
               {T.cancel}
             </button>
-            {onShare && (
-              <button
-                className="modal-btn modal-btn--edit"
-                onClick={() => onShare(draft)}
-                title={T.shareMeal}
-              >
-                {T.shareMeal}
-              </button>
-            )}
           </div>
         )}
       </div>

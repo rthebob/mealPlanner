@@ -155,7 +155,8 @@ export const T = {
     "Naskenujte nebo nahrajte QR kód pro import jídel do knihovny.",
   libraryQrImportSuccess: (n: number) =>
     `✓ Importováno ${n} ${n === 1 ? "jídlo" : n < 5 ? "jídla" : "jídel"}!`,
-  shareLibrary: "📲 Sdílet knihovnu",
+  shareLibrary: "📲 Sdílet",
+  shareLibraryAll: "📚 Celou knihovnu",
   shareMeal: "📲",
 
   lightMode: "☀️",
