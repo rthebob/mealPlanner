@@ -38,8 +38,8 @@ function migratePlan(plan: DayPlan[]): DayPlan[] {
   return plan.map((day) => {
     const migrated = { ...day };
     for (const key of SLOT_KEYS) {
-      (migrated as Record<string, unknown>)[key] = migrateSlot(
-        (day as Record<string, unknown>)[key],
+      (migrated as unknown as Record<string, unknown>)[key] = migrateSlot(
+        (day as unknown as Record<string, unknown>)[key],
       );
     }
     return migrated;
