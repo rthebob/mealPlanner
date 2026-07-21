@@ -1,0 +1,297 @@
+import { useEffect, useRef, useState } from "react";
+import QRCode from "qrcode";
+import type { ShoppingListEntry, AdHocItem } from "./ShoppingList";
+import { T } from "../i18n";
+import "./BasketQRModal.css";
+
+interface BasketPayload {
+  entries: { mealId: string; mealName: string; serves: number }[];
+  adHocItems: AdHocItem[];
+}
+
+interface BasketQRModalProps {
+  entries: ShoppingListEntry[];
+  adHocItems: AdHocItem[];
+  onClose: () => void;
+  onLoad: (entries: ShoppingListEntry[], adHocItems: AdHocItem[]) => void;
+}
+
+type Tab = "share" | "load";
+
+export default function BasketQRModal({
+  entries,
+  adHocItems,
+  onClose,
+  onLoad,
+}: BasketQRModalProps) {
+  const [tab, setTab] = useState<Tab>("share");
+  const [qrDataUrl, setQrDataUrl] = useState<string>("");
+  const [decodeStatus, setDecodeStatus] = useState<"idle" | "success" | "error">("idle");
+  const [decodeMessage, setDecodeMessage] = useState("");
+  const [cameraActive, setCameraActive] = useState(false);
+  const [cameraError, setCameraError] = useState("");
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const streamRef = useRef<MediaStream | null>(null);
+  const rafRef = useRef<number>(0);
+
+  // Generate QR on mount / entries change
+  useEffect(() => {
+    const payload: BasketPayload = {
+      entries: entries.map(({ meal, serves }) => ({
+        mealId: meal.id,
+        mealName: meal.name,
+        serves,
+      })),
+      adHocItems,
+    };
+    const json = JSON.stringify(payload);
+    QRCode.toDataURL(json, {
+      errorCorrectionLevel: "M",
+      width: 280,
+      margin: 2,
+    })
+      .then(setQrDataUrl)
+      .catch(() => setQrDataUrl(""));
+  }, [entries, adHocItems]);
+
+  // Stop camera when closing or switching tabs
+  useEffect(() => {
+    return () => stopCamera();
+  }, []);
+
+  function stopCamera() {
+    if (rafRef.current) cancelAnimationFrame(rafRef.current);
+    streamRef.current?.getTracks().forEach((t) => t.stop());
+    streamRef.current = null;
+    setCameraActive(false);
+  }
+
+  async function startCamera() {
+    setCameraError("");
+    setDecodeStatus("idle");
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({
+        video: { facingMode: "environment" },
+      });
+      streamRef.current = stream;
+      if (videoRef.current) {
+        videoRef.current.srcObject = stream;
+        await videoRef.current.play();
+      }
+      setCameraActive(true);
+      scanFrame();
+    } catch {
+      setCameraError(T.qrCameraError);
+    }
+  }
+
+  function scanFrame() {
+    const video = videoRef.current;
+    if (!video || video.readyState < 2) {
+      rafRef.current = requestAnimationFrame(scanFrame);
+      return;
+    }
+    const canvas = document.createElement("canvas");
+    canvas.width = video.videoWidth;
+    canvas.height = video.videoHeight;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
+    ctx.drawImage(video, 0, 0);
+    const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+    // Dynamic import jsqr to keep initial bundle lean
+    import("jsqr").then(({ default: jsQR }) => {
+      const code = jsQR(imageData.data, imageData.width, imageData.height);
+      if (code) {
+        stopCamera();
+        processQRData(code.data);
+      } else {
+        rafRef.current = requestAnimationFrame(scanFrame);
+      }
+    });
+  }
+
+  function handleFileUpload(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const img = new Image();
+    const url = URL.createObjectURL(file);
+    img.onload = () => {
+      const canvas = document.createElement("canvas");
+      canvas.width = img.width;
+      canvas.height = img.height;
+      const ctx = canvas.getContext("2d");
+      if (!ctx) return;
+      ctx.drawImage(img, 0, 0);
+      const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+      URL.revokeObjectURL(url);
+      import("jsqr").then(({ default: jsQR }) => {
+        const code = jsQR(imageData.data, imageData.width, imageData.height);
+        if (code) {
+          processQRData(code.data);
+        } else {
+          setDecodeStatus("error");
+          setDecodeMessage(T.qrNoCode);
+        }
+      });
+    };
+    img.src = url;
+    e.target.value = "";
+  }
+
+  function processQRData(data: string) {
+    try {
+      const payload = JSON.parse(data) as BasketPayload;
+      if (
+        !Array.isArray(payload.entries) ||
+        !Array.isArray(payload.adHocItems)
+      ) {
+        throw new Error("invalid");
+      }
+      // Build ShoppingListEntry stubs — only mealId/mealName/serves are in QR
+      // We hand them back as "stub" meals; App can map real meal objects if available.
+      const loadedEntries: ShoppingListEntry[] = payload.entries.map((e) => ({
+        meal: {
+          id: e.mealId,
+          name: e.mealName,
+          serves: e.serves,
+          ingredients: [],
+          procedure: [],
+          macros: { calories: 0, protein: 0, carbohydrates: 0, fat: 0 },
+        },
+        serves: e.serves,
+      }));
+      onLoad(loadedEntries, payload.adHocItems);
+      setDecodeStatus("success");
+      setDecodeMessage(T.qrLoadSuccess);
+    } catch {
+      setDecodeStatus("error");
+      setDecodeMessage(T.qrInvalid);
+    }
+  }
+
+  const hasContent = entries.length > 0 || adHocItems.length > 0;
+
+  return (
+    <div className="modal-overlay" onClick={onClose}>
+      <div
+        className="modal-card basket-qr-card"
+        onClick={(e) => e.stopPropagation()}
+      >
+        {/* Header */}
+        <div className="modal-actions">
+          <span style={{ fontWeight: 700, fontSize: "1.05rem" }}>
+            {T.qrTitle}
+          </span>
+          <button className="modal-close" onClick={onClose} aria-label="Close">
+            ✕
+          </button>
+        </div>
+
+        {/* Tabs */}
+        <div className="basket-qr__tabs">
+          <button
+            className={`basket-qr__tab${tab === "share" ? " basket-qr__tab--active" : ""}`}
+            onClick={() => { setTab("share"); stopCamera(); }}
+          >
+            {T.qrShareTab}
+          </button>
+          <button
+            className={`basket-qr__tab${tab === "load" ? " basket-qr__tab--active" : ""}`}
+            onClick={() => { setTab("load"); stopCamera(); setDecodeStatus("idle"); }}
+          >
+            {T.qrLoadTab}
+          </button>
+        </div>
+
+        <div className="modal-card__body basket-qr__body">
+          {tab === "share" && (
+            <>
+              {!hasContent ? (
+                <p className="shopping-empty">{T.qrEmptyBasket}</p>
+              ) : qrDataUrl ? (
+                <>
+                  <p className="basket-qr__hint">{T.qrShareHint}</p>
+                  <div className="basket-qr__image-wrap">
+                    <img
+                      src={qrDataUrl}
+                      alt="Basket QR Code"
+                      className="basket-qr__image"
+                    />
+                  </div>
+                  <a
+                    className="modal-btn modal-btn--save basket-qr__download"
+                    href={qrDataUrl}
+                    download="basket-qr.png"
+                  >
+                    {T.qrDownload}
+                  </a>
+                </>
+              ) : (
+                <p className="shopping-empty">{T.qrGenerating}</p>
+              )}
+            </>
+          )}
+
+          {tab === "load" && (
+            <>
+              <p className="basket-qr__hint">{T.qrLoadHint}</p>
+
+              {/* Camera scan */}
+              <div className="basket-qr__camera-wrap">
+                <video
+                  ref={videoRef}
+                  className={`basket-qr__video${cameraActive ? " basket-qr__video--active" : ""}`}
+                  playsInline
+                  muted
+                />
+                {!cameraActive ? (
+                  <button
+                    className="modal-btn modal-btn--save basket-qr__cam-btn"
+                    onClick={startCamera}
+                  >
+                    {T.qrScanCamera}
+                  </button>
+                ) : (
+                  <button
+                    className="modal-btn modal-btn--cancel basket-qr__cam-btn"
+                    onClick={stopCamera}
+                  >
+                    {T.qrStopCamera}
+                  </button>
+                )}
+                {cameraError && (
+                  <p className="basket-qr__status basket-qr__status--error">
+                    {cameraError}
+                  </p>
+                )}
+              </div>
+
+              <div className="basket-qr__divider">
+                <span>{T.qrOr}</span>
+              </div>
+
+              {/* File upload */}
+              <label className="modal-btn basket-qr__upload-label">
+                {T.qrUploadImage}
+                <input
+                  type="file"
+                  accept="image/*"
+                  style={{ display: "none" }}
+                  onChange={handleFileUpload}
+                />
+              </label>
+
+              {decodeStatus !== "idle" && (
+                <p
+                  className={`basket-qr__status basket-qr__status--${decodeStatus}`}
+                >
+                  {decodeMessage}
+                </p>
+              )}
+            </>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}

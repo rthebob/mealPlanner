@@ -1,0 +1,140 @@
+.basket-qr-card {
+    max-width: 400px;
+}
+
+.basket-qr__tabs {
+    display: flex;
+    border-bottom: 2px solid var(--color-border);
+    margin-bottom: 0;
+}
+
+.basket-qr__tab {
+    flex: 1;
+    background: transparent;
+    border: none;
+    border-bottom: 3px solid transparent;
+    padding: 10px 0;
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: var(--color-text-muted);
+    cursor: pointer;
+    transition: color 0.15s, border-color 0.15s;
+    margin-bottom: -2px;
+}
+
+.basket-qr__tab:hover {
+    color: var(--color-text);
+}
+
+.basket-qr__tab--active {
+    color: var(--color-accent);
+    border-bottom-color: var(--color-accent);
+}
+
+.basket-qr__body {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 14px;
+    padding-top: 16px;
+}
+
+.basket-qr__hint {
+    font-size: 0.88rem;
+    color: var(--color-text-muted);
+    text-align: center;
+    margin: 0;
+}
+
+.basket-qr__image-wrap {
+    background: #fff;
+    border-radius: 12px;
+    padding: 12px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.10);
+}
+
+.basket-qr__image {
+    width: 240px;
+    height: 240px;
+    display: block;
+    border-radius: 4px;
+}
+
+.basket-qr__download {
+    width: 100%;
+    text-align: center;
+    text-decoration: none;
+}
+
+.basket-qr__camera-wrap {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+}
+
+.basket-qr__video {
+    display: none;
+    width: 100%;
+    max-width: 320px;
+    border-radius: 10px;
+    background: #000;
+}
+
+.basket-qr__video--active {
+    display: block;
+}
+
+.basket-qr__cam-btn {
+    width: 100%;
+}
+
+.basket-qr__divider {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    color: var(--color-text-muted);
+    font-size: 0.8rem;
+}
+
+.basket-qr__divider::before,
+.basket-qr__divider::after {
+    content: "";
+    flex: 1;
+    height: 1px;
+    background: var(--color-border);
+}
+
+.basket-qr__upload-label {
+    width: 100%;
+    text-align: center;
+    cursor: pointer;
+}
+
+.basket-qr__status {
+    font-size: 0.9rem;
+    font-weight: 600;
+    text-align: center;
+    margin: 0;
+    padding: 8px 12px;
+    border-radius: 8px;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.basket-qr__status--success {
+    color: #2e7d32;
+    background: rgba(46, 125, 50, 0.10);
+    border: 1px solid rgba(46, 125, 50, 0.3);
+}
+
+.basket-qr__status--error {
+    color: #c0392b;
+    background: rgba(192, 57, 43, 0.10);
+    border: 1px solid rgba(192, 57, 43, 0.3);
+}

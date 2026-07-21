@@ -126,6 +126,25 @@ export const T = {
   adHocPlaceholder: "Přidat položku…",
   adHocAdd: "+ Přidat",
 
+  // Basket QR share/load
+  qrTitle: "📲 Sdílet košík",
+  qrShareTab: "📤 Sdílet",
+  qrLoadTab: "📥 Načíst",
+  qrShareHint: "Naskenujte QR kód jiným telefonem pro načtení obsahu košíku.",
+  qrEmptyBasket: "Košík je prázdný — nejsou co sdílet.",
+  qrGenerating: "Generuji QR kód…",
+  qrDownload: "⬇ Stáhnout QR",
+  qrLoadHint: "Naskenujte QR kód z košíku nebo nahrajte obrázek.",
+  qrScanCamera: "📷 Skenovat kamerou",
+  qrStopCamera: "✕ Zastavit kameru",
+  qrOr: "nebo",
+  qrUploadImage: "🖼 Nahrát obrázek QR kódu",
+  qrNoCode: "QR kód nebyl nalezen v obrázku.",
+  qrInvalid: "Neplatný QR kód košíku.",
+  qrLoadSuccess: "✓ Košík byl úspěšně načten!",
+  qrCameraError: "Nepodařilo se spustit kameru.",
+  shareBasket: "📲 Sdílet",
+
   lightMode: "☀️",
   darkMode: "🌙",
 

@@ -14,6 +14,7 @@ export interface AdHocItem {
 }
 
 interface ShoppingListProps {
+  onShare: () => void;
   entries: ShoppingListEntry[];
   adHocItems: AdHocItem[];
   checkedKeys: Set<string>;
@@ -41,6 +42,7 @@ export default function ShoppingList({
   onUpdateServes,
   onAddAdHoc,
   onRemoveAdHoc,
+  onShare,
 }: ShoppingListProps) {
   const [confirmClear, setConfirmClear] = useState(false);
   const [adHocInput, setAdHocInput] = useState("");
@@ -83,9 +85,23 @@ export default function ShoppingList({
           <span style={{ fontWeight: 700, fontSize: "1.05rem" }}>
             {T.shoppingList}
           </span>
-          <button className="modal-close" onClick={onClose} aria-label="Close">
-            ✕
-          </button>
+          <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+            <button
+              className="modal-btn modal-btn--edit"
+              style={{ fontSize: "0.8rem", padding: "4px 10px" }}
+              onClick={onShare}
+              title={T.shareBasket}
+            >
+              {T.shareBasket}
+            </button>
+            <button
+              className="modal-close"
+              onClick={onClose}
+              aria-label="Close"
+            >
+              ✕
+            </button>
+          </div>
         </div>
 
         <div className="modal-card__body">

@@ -18,6 +18,7 @@ import {
   isoWeekToDate,
 } from "./components/HistoryPicker";
 import { MealLibrary } from "./components/MealLibrary";
+import BasketQRModal from "./components/BasketQRModal";
 import { T } from "./i18n";
 import "./App.css";
 
@@ -272,6 +273,7 @@ function App() {
       return [];
     }
   });
+  const [showBasketQR, setShowBasketQR] = useState(false);
   const [showSlotPicker, setShowSlotPicker] = useState(false);
   const [editingMeal, setEditingMeal] = useState<Meal | null>(null);
   const [creatingNew, setCreatingNew] = useState(false);
@@ -691,7 +693,7 @@ function App() {
                     {T.historyBtn}
                   </button>
                   <button className="app-settings-item" onClick={toggleTheme}>
-                    {theme === "dark" ? "Světlý motiv" : "Tmavý motiv"}
+                    {theme === "dark" ? "☀️ Světlý motiv" : "🌙 Tmavý motiv"}
                   </button>
                   <button
                     className="app-settings-item"
@@ -968,6 +970,44 @@ function App() {
           }
           onAddAdHoc={addAdHocItem}
           onRemoveAdHoc={removeAdHocItem}
+          onShare={() => setShowBasketQR(true)}
+        />
+      )}
+
+      {showBasketQR && (
+        <BasketQRModal
+          entries={shoppingList}
+          adHocItems={shoppingAdHoc}
+          onClose={() => setShowBasketQR(false)}
+          onLoad={(loadedEntries, loadedAdHoc) => {
+            // Merge loaded entries: for known meals, prefer full data from library
+            const merged = loadedEntries.map((le) => {
+              const found = library.find((m) => m.id === le.meal.id);
+              return found ? { meal: found, serves: le.serves } : le;
+            });
+            updateShoppingList([
+              ...shoppingList.filter(
+                (e) => !merged.some((m) => m.meal.id === e.meal.id),
+              ),
+              ...merged,
+            ]);
+            // Merge ad-hoc items
+            setShoppingAdHoc((prev) => {
+              const existingIds = new Set(prev.map((i) => i.id));
+              const newItems = loadedAdHoc.filter(
+                (i) => !existingIds.has(i.id),
+              );
+              const next = [...prev, ...newItems];
+              try {
+                localStorage.setItem(
+                  "mealplanner-shopping-adhoc",
+                  JSON.stringify(next),
+                );
+              } catch {}
+              return next;
+            });
+            setShowBasketQR(false);
+          }}
         />
       )}
     </div>
