@@ -1,39 +1,25 @@
 import { useEffect, useRef, useState } from "react";
 import QRCode from "qrcode";
-import type { ShoppingListEntry, AdHocItem } from "./ShoppingList";
+import type { Meal } from "../types";
 import { T } from "../i18n";
 import Portal from "./Portal";
-import "./BasketQRModal.css";
+import "./LibraryQRModal.css";
 
-interface BasketPayload {
-  entries: {
-    meal: {
-      id: string;
-      name: string;
-      serves: number;
-      ingredients: import("../types").Ingredient[];
-      macros: import("../types").Macros;
-    };
-    serves: number;
-  }[];
-  adHocItems: AdHocItem[];
-}
-
-interface BasketQRModalProps {
-  entries: ShoppingListEntry[];
-  adHocItems: AdHocItem[];
+interface LibraryQRModalProps {
+  /** The meals to encode — either the whole library or a single meal */
+  meals: Meal[];
   onClose: () => void;
-  onLoad: (entries: ShoppingListEntry[], adHocItems: AdHocItem[]) => void;
+  /** Called with decoded meals so the parent can merge them into the library */
+  onImport: (meals: Meal[]) => void;
 }
 
 type Tab = "share" | "load";
 
-export default function BasketQRModal({
-  entries,
-  adHocItems,
+export default function LibraryQRModal({
+  meals,
   onClose,
-  onLoad,
-}: BasketQRModalProps) {
+  onImport,
+}: LibraryQRModalProps) {
   const [tab, setTab] = useState<Tab>("share");
   const [qrDataUrl, setQrDataUrl] = useState<string>("");
   const [decodeStatus, setDecodeStatus] = useState<
@@ -46,34 +32,15 @@ export default function BasketQRModal({
   const streamRef = useRef<MediaStream | null>(null);
   const rafRef = useRef<number>(0);
 
-  // Generate QR on mount / entries change
   useEffect(() => {
-    const payload: BasketPayload = {
-      entries: entries.map(({ meal, serves }) => ({
-        meal: {
-          id: meal.id,
-          name: meal.name,
-          serves: meal.serves,
-          ingredients: meal.ingredients,
-          macros: meal.macros,
-        },
-        serves,
-      })),
-      adHocItems,
-    };
+    // Strip imageUrl to keep QR compact; keep all else
+    const payload = meals.map(({ imageUrl: _img, ...rest }) => rest);
     const json = JSON.stringify(payload);
-    QRCode.toDataURL(json, {
-      errorCorrectionLevel: "L",
-      width: 300,
-      margin: 2,
-    })
+    QRCode.toDataURL(json, { errorCorrectionLevel: "L", width: 300, margin: 2 })
       .then(setQrDataUrl)
-      .catch(() => {
-        setQrDataUrl("too-large");
-      });
-  }, [entries, adHocItems]);
+      .catch(() => setQrDataUrl("too-large"));
+  }, [meals]);
 
-  // Stop camera when closing or switching tabs
   useEffect(() => {
     return () => stopCamera();
   }, []);
@@ -117,7 +84,6 @@ export default function BasketQRModal({
     if (!ctx) return;
     ctx.drawImage(video, 0, 0);
     const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-    // Dynamic import jsqr to keep initial bundle lean
     import("jsqr").then(({ default: jsQR }) => {
       const code = jsQR(imageData.data, imageData.width, imageData.height);
       if (code) {
@@ -159,8 +125,6 @@ export default function BasketQRModal({
     img.onload = () => {
       URL.revokeObjectURL(url);
       import("jsqr").then(({ default: jsQR }) => {
-        // Try multiple scales so a small QR in a large screenshot is still found.
-        // Start at full size, then scale up small images and crop-scan large ones.
         const scales = [1, 1.5, 2, 0.75, 0.5, 3];
         let code: { data: string } | null = null;
         for (const scale of scales) {
@@ -181,30 +145,32 @@ export default function BasketQRModal({
 
   function processQRData(data: string) {
     try {
-      const payload = JSON.parse(data) as BasketPayload;
+      const parsed = JSON.parse(data);
+      if (!Array.isArray(parsed) || parsed.length === 0)
+        throw new Error("invalid");
+      // Basic validation: each item must have id and name
+      const imported = parsed as Meal[];
       if (
-        !Array.isArray(payload.entries) ||
-        !Array.isArray(payload.adHocItems)
+        !imported.every(
+          (m) => typeof m.id === "string" && typeof m.name === "string",
+        )
       ) {
         throw new Error("invalid");
       }
-      const loadedEntries: ShoppingListEntry[] = payload.entries.map((e) => ({
-        meal: {
-          ...e.meal,
-          procedure: [],
-        },
-        serves: e.serves,
-      }));
-      onLoad(loadedEntries, payload.adHocItems);
+      onImport(imported);
       setDecodeStatus("success");
-      setDecodeMessage(T.qrLoadSuccess);
+      setDecodeMessage(
+        imported.length === 1
+          ? T.libraryQrImportSuccess(1)
+          : T.libraryQrImportSuccess(imported.length),
+      );
     } catch {
       setDecodeStatus("error");
       setDecodeMessage(T.qrInvalid);
     }
   }
 
-  const hasContent = entries.length > 0 || adHocItems.length > 0;
+  const isSingle = meals.length === 1;
 
   return (
     <Portal>
@@ -213,10 +179,11 @@ export default function BasketQRModal({
           className="modal-card basket-qr-card"
           onClick={(e) => e.stopPropagation()}
         >
-          {/* Header */}
           <div className="modal-actions">
             <span style={{ fontWeight: 700, fontSize: "1.05rem" }}>
-              {T.qrTitle}
+              {isSingle
+                ? T.libraryQrTitleSingle(meals[0].name)
+                : T.libraryQrTitleAll}
             </span>
             <button
               className="modal-close"
@@ -227,7 +194,6 @@ export default function BasketQRModal({
             </button>
           </div>
 
-          {/* Tabs */}
           <div className="basket-qr__tabs">
             <button
               className={`basket-qr__tab${tab === "share" ? " basket-qr__tab--active" : ""}`}
@@ -253,26 +219,28 @@ export default function BasketQRModal({
           <div className="modal-card__body basket-qr__body">
             {tab === "share" && (
               <>
-                {!hasContent ? (
-                  <p className="shopping-empty">{T.qrEmptyBasket}</p>
-                ) : qrDataUrl === "too-large" ? (
+                {qrDataUrl === "too-large" ? (
                   <p className="basket-qr__status basket-qr__status--error">
                     {T.qrTooLarge}
                   </p>
                 ) : qrDataUrl ? (
                   <>
-                    <p className="basket-qr__hint">{T.qrShareHint}</p>
+                    <p className="basket-qr__hint">
+                      {isSingle
+                        ? T.libraryQrShareHintSingle
+                        : T.libraryQrShareHintAll}
+                    </p>
                     <div className="basket-qr__image-wrap">
                       <img
                         src={qrDataUrl}
-                        alt="Basket QR Code"
+                        alt="Library QR Code"
                         className="basket-qr__image"
                       />
                     </div>
                     <a
                       className="modal-btn modal-btn--save basket-qr__download"
                       href={qrDataUrl}
-                      download="basket-qr.png"
+                      download="library-qr.png"
                     >
                       {T.qrDownload}
                     </a>
@@ -285,9 +253,8 @@ export default function BasketQRModal({
 
             {tab === "load" && (
               <>
-                <p className="basket-qr__hint">{T.qrLoadHint}</p>
+                <p className="basket-qr__hint">{T.libraryQrLoadHint}</p>
 
-                {/* Camera scan */}
                 <div className="basket-qr__camera-wrap">
                   <video
                     ref={videoRef}
@@ -321,7 +288,6 @@ export default function BasketQRModal({
                   <span>{T.qrOr}</span>
                 </div>
 
-                {/* File upload */}
                 <label className="modal-btn basket-qr__upload-label">
                   {T.qrUploadImage}
                   <input

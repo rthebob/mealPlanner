@@ -146,6 +146,18 @@ export const T = {
   qrCameraError: "Nepodařilo se spustit kameru.",
   shareBasket: "📲 Sdílet",
 
+  // Library QR
+  libraryQrTitleAll: "📲 Sdílet knihovnu",
+  libraryQrTitleSingle: (name: string) => `📲 Sdílet: ${name}`,
+  libraryQrShareHintAll: "Naskenujte QR kód pro import celé knihovny jídel.",
+  libraryQrShareHintSingle: "Naskenujte QR kód pro import tohoto jídla.",
+  libraryQrLoadHint:
+    "Naskenujte nebo nahrajte QR kód pro import jídel do knihovny.",
+  libraryQrImportSuccess: (n: number) =>
+    `✓ Importováno ${n} ${n === 1 ? "jídlo" : n < 5 ? "jídla" : "jídel"}!`,
+  shareLibrary: "📲 Sdílet knihovnu",
+  shareMeal: "📲",
+
   lightMode: "☀️",
   darkMode: "🌙",
 

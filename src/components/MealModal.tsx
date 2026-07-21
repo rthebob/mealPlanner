@@ -8,6 +8,7 @@ interface MealModalProps {
   onClose: () => void;
   onSave: (updated: Meal) => void;
   initialEditMode?: boolean;
+  onShare?: (meal: Meal) => void;
 }
 
 function emptyIngredient(): Ingredient {
@@ -15,10 +16,10 @@ function emptyIngredient(): Ingredient {
 }
 
 const MEAL_TYPE_DEFS: { type: MealType; label: string; emoji: string }[] = [
-  { type: 'breakfast', label: T.mealTypeBreakfast, emoji: '☀️' },
-  { type: 'snack',     label: T.mealTypeSnack,     emoji: '🍎' },
-  { type: 'lunch',     label: T.mealTypeLunch,     emoji: '🍝' },
-  { type: 'dinner',    label: T.mealTypeDinner,    emoji: '🌝' },
+  { type: "breakfast", label: T.mealTypeBreakfast, emoji: "☀️" },
+  { type: "snack", label: T.mealTypeSnack, emoji: "🍎" },
+  { type: "lunch", label: T.mealTypeLunch, emoji: "🍝" },
+  { type: "dinner", label: T.mealTypeDinner, emoji: "🌝" },
 ];
 
 export function MealModal({
@@ -26,6 +27,7 @@ export function MealModal({
   onClose,
   onSave,
   initialEditMode,
+  onShare,
 }: MealModalProps) {
   const [isEditing, setIsEditing] = useState(initialEditMode ?? false);
   const [draft, setDraft] = useState<Meal>({
@@ -453,6 +455,15 @@ export function MealModal({
             >
               {T.cancel}
             </button>
+            {onShare && (
+              <button
+                className="modal-btn modal-btn--edit"
+                onClick={() => onShare(draft)}
+                title={T.shareMeal}
+              >
+                {T.shareMeal}
+              </button>
+            )}
           </div>
         )}
       </div>

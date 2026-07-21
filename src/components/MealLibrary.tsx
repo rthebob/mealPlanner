@@ -1,4 +1,5 @@
 import { useRef, useState } from "react";
+import LibraryQRModal from "./LibraryQRModal";
 import type { Meal, Macros, Ingredient, MealType } from "../types";
 import { T } from "../i18n";
 import { MealModal } from "./MealModal";
@@ -29,10 +30,10 @@ function emptyIngredient(): Ingredient {
 }
 
 const MEAL_TYPE_DEFS: { type: MealType; label: string; emoji: string }[] = [
-  { type: 'breakfast', label: T.mealTypeBreakfast, emoji: '☀️' },
-  { type: 'snack',     label: T.mealTypeSnack,     emoji: '🍎' },
-  { type: 'lunch',     label: T.mealTypeLunch,     emoji: '🍝' },
-  { type: 'dinner',    label: T.mealTypeDinner,    emoji: '🌝' },
+  { type: "breakfast", label: T.mealTypeBreakfast, emoji: "☀️" },
+  { type: "snack", label: T.mealTypeSnack, emoji: "🍎" },
+  { type: "lunch", label: T.mealTypeLunch, emoji: "🍝" },
+  { type: "dinner", label: T.mealTypeDinner, emoji: "🌝" },
 ];
 
 interface MealFormProps {
@@ -325,10 +326,18 @@ export function MealLibrary({
     meal: Meal;
     editMode: boolean;
   } | null>(null);
+  const [libraryQR, setLibraryQR] = useState<{ meals: Meal[] } | null>(null);
 
   function handleAdd(meal: Meal) {
     onChange([...library, meal]);
     setShowNewForm(false);
+  }
+
+  function handleImportMeals(imported: Meal[]) {
+    // Merge: keep existing meals, add imported ones that don't clash by id; if id clashes, keep existing
+    const existingIds = new Set(library.map((m) => m.id));
+    const toAdd = imported.filter((m) => !existingIds.has(m.id));
+    if (toAdd.length > 0) onChange([...library, ...toAdd]);
   }
 
   function handleDelete(id: string) {
@@ -350,6 +359,14 @@ export function MealLibrary({
       >
         <div className="modal-actions">
           <h2 className="library-title">{T.mealLibrary}</h2>
+          <button
+            className="modal-btn modal-btn--edit"
+            style={{ fontSize: "0.8rem", padding: "4px 10px" }}
+            onClick={() => setLibraryQR({ meals: library })}
+            title={T.shareLibrary}
+          >
+            {T.shareLibrary}
+          </button>
           <button className="modal-close" onClick={onClose} aria-label="Zavřít">
             ×
           </button>
@@ -559,11 +576,23 @@ export function MealLibrary({
         )}
       </div>
 
+      {libraryQR && (
+        <LibraryQRModal
+          meals={libraryQR.meals}
+          onClose={() => setLibraryQR(null)}
+          onImport={(imported) => {
+            handleImportMeals(imported);
+            setLibraryQR(null);
+          }}
+        />
+      )}
+
       {viewingMeal && (
         <MealModal
           meal={viewingMeal.meal}
           initialEditMode={viewingMeal.editMode}
           onClose={() => setViewingMeal(null)}
+          onShare={(meal) => setLibraryQR({ meals: [meal] })}
           onSave={(updated) => {
             onChange(library.map((m) => (m.id === updated.id ? updated : m)));
             setViewingMeal((prev) =>

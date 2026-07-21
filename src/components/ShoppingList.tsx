@@ -85,23 +85,9 @@ export default function ShoppingList({
           <span style={{ fontWeight: 700, fontSize: "1.05rem" }}>
             {T.shoppingList}
           </span>
-          <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
-            <button
-              className="modal-btn modal-btn--edit"
-              style={{ fontSize: "0.8rem", padding: "4px 10px" }}
-              onClick={onShare}
-              title={T.shareBasket}
-            >
-              {T.shareBasket}
-            </button>
-            <button
-              className="modal-close"
-              onClick={onClose}
-              aria-label="Close"
-            >
-              ✕
-            </button>
-          </div>
+          <button className="modal-close" onClick={onClose} aria-label="Close">
+            ✕
+          </button>
         </div>
 
         <div className="modal-card__body">
@@ -327,12 +313,17 @@ export default function ShoppingList({
                 </button>
               </>
             ) : (
-              <button
-                className="modal-btn shopping-clear-btn"
-                onClick={() => setConfirmClear(true)}
-              >
-                {T.clearList}
-              </button>
+              <>
+                <button
+                  className="modal-btn shopping-clear-btn"
+                  onClick={() => setConfirmClear(true)}
+                >
+                  {T.clearList}
+                </button>
+                <button className="modal-btn modal-btn--edit" onClick={onShare}>
+                  {T.shareBasket}
+                </button>
+              </>
             )}
           </div>
         )}
