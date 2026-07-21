@@ -3,6 +3,7 @@ import QRCode from "qrcode";
 import type { Meal } from "../types";
 import { T } from "../i18n";
 import Portal from "./Portal";
+import { compressToBase64, decompressFromBase64 } from "./qrCompression";
 import "./LibraryQRModal.css";
 
 interface LibraryQRModalProps {
@@ -36,9 +37,15 @@ export default function LibraryQRModal({
     // Strip imageUrl to keep QR compact; keep all else
     const payload = meals.map(({ imageUrl: _img, ...rest }) => rest);
     const json = JSON.stringify(payload);
-    QRCode.toDataURL(json, { errorCorrectionLevel: "L", width: 300, margin: 2 })
-      .then(setQrDataUrl)
-      .catch(() => setQrDataUrl("too-large"));
+    compressToBase64(json).then((compressed) =>
+      QRCode.toDataURL(compressed, {
+        errorCorrectionLevel: "L",
+        width: 300,
+        margin: 2,
+      })
+        .then(setQrDataUrl)
+        .catch(() => setQrDataUrl("too-large")),
+    );
   }, [meals]);
 
   useEffect(() => {
@@ -144,30 +151,36 @@ export default function LibraryQRModal({
   }
 
   function processQRData(data: string) {
-    try {
-      const parsed = JSON.parse(data);
-      if (!Array.isArray(parsed) || parsed.length === 0)
-        throw new Error("invalid");
-      // Basic validation: each item must have id and name
-      const imported = parsed as Meal[];
-      if (
-        !imported.every(
-          (m) => typeof m.id === "string" && typeof m.name === "string",
-        )
-      ) {
-        throw new Error("invalid");
-      }
-      onImport(imported);
-      setDecodeStatus("success");
-      setDecodeMessage(
-        imported.length === 1
-          ? T.libraryQrImportSuccess(1)
-          : T.libraryQrImportSuccess(imported.length),
-      );
-    } catch {
-      setDecodeStatus("error");
-      setDecodeMessage(T.qrInvalid);
-    }
+    decompressFromBase64(data)
+      .then((decompressed) => {
+        try {
+          const parsed = JSON.parse(decompressed);
+          if (!Array.isArray(parsed) || parsed.length === 0)
+            throw new Error("invalid");
+          const imported = parsed as Meal[];
+          if (
+            !imported.every(
+              (m) => typeof m.id === "string" && typeof m.name === "string",
+            )
+          ) {
+            throw new Error("invalid");
+          }
+          onImport(imported);
+          setDecodeStatus("success");
+          setDecodeMessage(
+            imported.length === 1
+              ? T.libraryQrImportSuccess(1)
+              : T.libraryQrImportSuccess(imported.length),
+          );
+        } catch {
+          setDecodeStatus("error");
+          setDecodeMessage(T.qrInvalid);
+        }
+      })
+      .catch(() => {
+        setDecodeStatus("error");
+        setDecodeMessage(T.qrInvalid);
+      });
   }
 
   const isSingle = meals.length === 1;

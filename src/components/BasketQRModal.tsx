@@ -3,6 +3,7 @@ import QRCode from "qrcode";
 import type { ShoppingListEntry, AdHocItem } from "./ShoppingList";
 import { T } from "../i18n";
 import Portal from "./Portal";
+import { compressToBase64, decompressFromBase64 } from "./qrCompression";
 import "./BasketQRModal.css";
 
 interface BasketPayload {
@@ -62,15 +63,17 @@ export default function BasketQRModal({
       adHocItems,
     };
     const json = JSON.stringify(payload);
-    QRCode.toDataURL(json, {
-      errorCorrectionLevel: "L",
-      width: 300,
-      margin: 2,
-    })
-      .then(setQrDataUrl)
-      .catch(() => {
-        setQrDataUrl("too-large");
-      });
+    compressToBase64(json).then((compressed) =>
+      QRCode.toDataURL(compressed, {
+        errorCorrectionLevel: "L",
+        width: 300,
+        margin: 2,
+      })
+        .then(setQrDataUrl)
+        .catch(() => {
+          setQrDataUrl("too-large");
+        }),
+    );
   }, [entries, adHocItems]);
 
   // Stop camera when closing or switching tabs
@@ -180,28 +183,37 @@ export default function BasketQRModal({
   }
 
   function processQRData(data: string) {
-    try {
-      const payload = JSON.parse(data) as BasketPayload;
-      if (
-        !Array.isArray(payload.entries) ||
-        !Array.isArray(payload.adHocItems)
-      ) {
-        throw new Error("invalid");
-      }
-      const loadedEntries: ShoppingListEntry[] = payload.entries.map((e) => ({
-        meal: {
-          ...e.meal,
-          procedure: [],
-        },
-        serves: e.serves,
-      }));
-      onLoad(loadedEntries, payload.adHocItems);
-      setDecodeStatus("success");
-      setDecodeMessage(T.qrLoadSuccess);
-    } catch {
-      setDecodeStatus("error");
-      setDecodeMessage(T.qrInvalid);
-    }
+    decompressFromBase64(data)
+      .then((decompressed) => {
+        try {
+          const payload = JSON.parse(decompressed) as BasketPayload;
+          if (
+            !Array.isArray(payload.entries) ||
+            !Array.isArray(payload.adHocItems)
+          ) {
+            throw new Error("invalid");
+          }
+          const loadedEntries: ShoppingListEntry[] = payload.entries.map(
+            (e) => ({
+              meal: {
+                ...e.meal,
+                procedure: [],
+              },
+              serves: e.serves,
+            }),
+          );
+          onLoad(loadedEntries, payload.adHocItems);
+          setDecodeStatus("success");
+          setDecodeMessage(T.qrLoadSuccess);
+        } catch {
+          setDecodeStatus("error");
+          setDecodeMessage(T.qrInvalid);
+        }
+      })
+      .catch(() => {
+        setDecodeStatus("error");
+        setDecodeMessage(T.qrInvalid);
+      });
   }
 
   const hasContent = entries.length > 0 || adHocItems.length > 0;
