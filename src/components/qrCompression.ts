@@ -1,16 +1,23 @@
 /**
- * Compress a string with gzip via the browser's CompressionStream API,
- * then return a base64-encoded result prefixed with "gz:" so the decoder
- * knows to decompress it.
- *
- * Falls back to returning the raw string if CompressionStream is unavailable.
+ * Compress a string using the best available CompressionStream format,
+ * then base64-encode it with a prefix indicating the format:
+ *   "gz:"  — gzip (Chrome, Firefox, Edge)
+ *   "df:"  — deflate-raw (Safari / iOS)
+ *   (no prefix) — uncompressed fallback
  */
-export async function compressToBase64(data: string): Promise<string> {
-  if (typeof CompressionStream === "undefined") return data;
-  const encoded = new TextEncoder().encode(data);
-  const cs = new CompressionStream("gzip");
+
+async function compressWith(
+  data: Uint8Array,
+  format: CompressionFormat,
+): Promise<Uint8Array> {
+  const cs = new CompressionStream(format);
   const writer = cs.writable.getWriter();
-  writer.write(encoded);
+  writer.write(
+    data.buffer.slice(
+      data.byteOffset,
+      data.byteOffset + data.byteLength,
+    ) as ArrayBuffer,
+  );
   writer.close();
   const chunks: Uint8Array[] = [];
   const reader = cs.readable.getReader();
@@ -26,27 +33,21 @@ export async function compressToBase64(data: string): Promise<string> {
     result.set(chunk, offset);
     offset += chunk.length;
   }
-  // Convert to base64
-  let binary = "";
-  for (let i = 0; i < result.length; i++) binary += String.fromCharCode(result[i]);
-  return "gz:" + btoa(binary);
+  return result;
 }
 
-/**
- * Decompress a value produced by compressToBase64.
- * If it doesn't start with "gz:" it is treated as plain JSON and returned as-is.
- */
-export async function decompressFromBase64(data: string): Promise<string> {
-  if (!data.startsWith("gz:")) return data;
-  const binary = atob(data.slice(3));
-  const bytes = new Uint8Array(binary.length);
-  for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
-  if (typeof DecompressionStream === "undefined") {
-    throw new Error("DecompressionStream not supported");
-  }
-  const ds = new DecompressionStream("gzip");
+async function decompressWith(
+  data: Uint8Array,
+  format: CompressionFormat,
+): Promise<string> {
+  const ds = new DecompressionStream(format);
   const writer = ds.writable.getWriter();
-  writer.write(bytes);
+  writer.write(
+    data.buffer.slice(
+      data.byteOffset,
+      data.byteOffset + data.byteLength,
+    ) as ArrayBuffer,
+  );
   writer.close();
   const chunks: Uint8Array[] = [];
   const reader = ds.readable.getReader();
@@ -63,4 +64,47 @@ export async function decompressFromBase64(data: string): Promise<string> {
     offset += chunk.length;
   }
   return new TextDecoder().decode(result);
+}
+
+function toBase64(bytes: Uint8Array): string {
+  let binary = "";
+  for (let i = 0; i < bytes.length; i++)
+    binary += String.fromCharCode(bytes[i]);
+  return btoa(binary);
+}
+
+function fromBase64(str: string): Uint8Array {
+  const binary = atob(str);
+  const bytes = new Uint8Array(binary.length);
+  for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+  return bytes;
+}
+
+export async function compressToBase64(data: string): Promise<string> {
+  if (typeof CompressionStream === "undefined") return data;
+  const encoded = new TextEncoder().encode(data);
+  // Try gzip first (Chrome/Firefox/Edge), fall back to deflate-raw (Safari/iOS)
+  for (const [format, prefix] of [
+    ["gzip", "gz:"],
+    ["deflate-raw", "df:"],
+  ] as const) {
+    try {
+      const compressed = await compressWith(encoded, format);
+      return prefix + toBase64(compressed);
+    } catch {
+      // format not supported, try next
+    }
+  }
+  return data; // uncompressed fallback
+}
+
+export async function decompressFromBase64(data: string): Promise<string> {
+  if (data.startsWith("gz:")) {
+    return decompressWith(fromBase64(data.slice(3)), "gzip");
+  }
+  if (data.startsWith("df:")) {
+    return decompressWith(fromBase64(data.slice(3)), "deflate-raw");
+  }
+  // No prefix — plain JSON (uncompressed or old QR code)
+  return data;
 }
