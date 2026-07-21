@@ -218,6 +218,19 @@ export default function BasketQRModal({
 
   const hasContent = entries.length > 0 || adHocItems.length > 0;
 
+  function downloadQR(dataUrl: string, filename: string) {
+    fetch(dataUrl)
+      .then((r) => r.blob())
+      .then((blob) => {
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = filename;
+        a.click();
+        setTimeout(() => URL.revokeObjectURL(url), 1000);
+      });
+  }
+
   return (
     <Portal>
       <div className="modal-overlay" onClick={onClose}>
@@ -281,13 +294,12 @@ export default function BasketQRModal({
                         className="basket-qr__image"
                       />
                     </div>
-                    <a
+                    <button
                       className="modal-btn modal-btn--save basket-qr__download"
-                      href={qrDataUrl}
-                      download="basket-qr.png"
+                      onClick={() => downloadQR(qrDataUrl, "basket-qr.png")}
                     >
                       {T.qrDownload}
-                    </a>
+                    </button>
                   </>
                 ) : (
                   <p className="shopping-empty">{T.qrGenerating}</p>
