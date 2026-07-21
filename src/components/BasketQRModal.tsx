@@ -128,22 +128,44 @@ export default function BasketQRModal({
     });
   }
 
+  function scanImageAtScale(
+    jsQR: (
+      data: Uint8ClampedArray,
+      width: number,
+      height: number,
+    ) => { data: string } | null,
+    img: HTMLImageElement,
+    scale: number,
+  ): { data: string } | null {
+    const w = Math.round(img.width * scale);
+    const h = Math.round(img.height * scale);
+    if (w < 64 || h < 64) return null;
+    const canvas = document.createElement("canvas");
+    canvas.width = w;
+    canvas.height = h;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return null;
+    ctx.drawImage(img, 0, 0, w, h);
+    const imageData = ctx.getImageData(0, 0, w, h);
+    return jsQR(imageData.data, imageData.width, imageData.height);
+  }
+
   function handleFileUpload(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
     if (!file) return;
     const img = new Image();
     const url = URL.createObjectURL(file);
     img.onload = () => {
-      const canvas = document.createElement("canvas");
-      canvas.width = img.width;
-      canvas.height = img.height;
-      const ctx = canvas.getContext("2d");
-      if (!ctx) return;
-      ctx.drawImage(img, 0, 0);
-      const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
       URL.revokeObjectURL(url);
       import("jsqr").then(({ default: jsQR }) => {
-        const code = jsQR(imageData.data, imageData.width, imageData.height);
+        // Try multiple scales so a small QR in a large screenshot is still found.
+        // Start at full size, then scale up small images and crop-scan large ones.
+        const scales = [1, 1.5, 2, 0.75, 0.5, 3];
+        let code: { data: string } | null = null;
+        for (const scale of scales) {
+          code = scanImageAtScale(jsQR, img, scale);
+          if (code) break;
+        }
         if (code) {
           processQRData(code.data);
         } else {
