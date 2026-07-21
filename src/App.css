@@ -126,7 +126,7 @@ body {
     background: var(--color-surface);
     border: 1px solid var(--color-border);
     border-radius: 8px;
-    color: var(--color-text);
+    color: var(--color-accent);
     font-size: 1rem;
     width: 36px;
     height: 36px;

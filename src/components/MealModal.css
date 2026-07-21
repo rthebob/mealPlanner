@@ -364,3 +364,115 @@
     border-color: var(--color-accent);
     color: var(--color-accent);
 }
+
+/* Meal type badges */
+.meal-type-badges {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-bottom: 4px;
+}
+
+.meal-type-badge {
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: 20px;
+    padding: 4px 10px;
+    font-size: 0.78rem;
+    cursor: pointer;
+    color: var(--color-text-muted);
+    transition:
+        background 0.15s,
+        border-color 0.15s,
+        color 0.15s;
+}
+
+.meal-type-badge:hover {
+    border-color: var(--color-accent);
+    color: var(--color-accent);
+}
+
+.meal-type-badge--active {
+    background: var(--color-accent);
+    border-color: var(--color-accent);
+    color: #fff;
+}
+.ingredient-row {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.ingredient-row__amount {
+    width: 72px;
+    flex-shrink: 0;
+    text-align: right;
+}
+
+.ingredient-row__unit {
+    width: 64px;
+    flex-shrink: 0;
+}
+
+.ingredient-row__name {
+    flex: 1;
+    min-width: 0;
+}
+
+/* Serves row */
+.serves-row {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-bottom: 20px;
+}
+
+.serves-row__input {
+    width: 52px;
+    text-align: center;
+    /* hide browser spin arrows */
+    -moz-appearance: textfield;
+}
+.serves-row__input::-webkit-inner-spin-button,
+.serves-row__input::-webkit-outer-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+
+.serves-row__step-btn {
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    color: var(--color-text);
+    border-radius: 6px;
+    width: 28px;
+    height: 28px;
+    font-size: 1.1rem;
+    line-height: 1;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    transition:
+        background 0.15s,
+        border-color 0.15s,
+        color 0.15s;
+}
+.serves-row__step-btn:hover {
+    background: var(--color-accent);
+    border-color: var(--color-accent);
+    color: #fff;
+}
+
+.modal-serves-label {
+    font-size: 0.72rem;
+    color: var(--color-text-dim);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.modal-serves-display {
+    font-size: 0.82rem;
+    color: var(--color-text-muted);
+    margin: 0 0 20px;
+}

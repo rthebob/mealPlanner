@@ -7,11 +7,22 @@ export interface Macros {
 
 export type MacroGoals = Macros;
 
+export interface Ingredient {
+  name: string;
+  amount: string; // e.g. "200", "1.5" — kept as string for flexible input
+  unit: string; // e.g. "g", "ml", "ks", "lžíce"
+}
+
+export type MealType = "breakfast" | "snack" | "lunch" | "dinner";
+
 export interface Meal {
   id: string;
   name: string;
   imageUrl?: string;
-  ingredients: string[];
+  serves: number;
+  favourite?: boolean;
+  mealTypes?: MealType[];
+  ingredients: Ingredient[];
   procedure: string[];
   macros: Macros;
 }

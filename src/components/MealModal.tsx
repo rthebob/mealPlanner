@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import type { Meal, Macros } from "../types";
+import type { Meal, Macros, Ingredient, MealType } from "../types";
 import { T } from "../i18n";
 import "./MealModal.css";
 
@@ -10,6 +10,17 @@ interface MealModalProps {
   initialEditMode?: boolean;
 }
 
+function emptyIngredient(): Ingredient {
+  return { name: "", amount: "", unit: "" };
+}
+
+const MEAL_TYPE_DEFS: { type: MealType; label: string; emoji: string }[] = [
+  { type: 'breakfast', label: T.mealTypeBreakfast, emoji: '☀️' },
+  { type: 'snack',     label: T.mealTypeSnack,     emoji: '🍎' },
+  { type: 'lunch',     label: T.mealTypeLunch,     emoji: '🍝' },
+  { type: 'dinner',    label: T.mealTypeDinner,    emoji: '🌝' },
+];
+
 export function MealModal({
   meal,
   onClose,
@@ -19,16 +30,28 @@ export function MealModal({
   const [isEditing, setIsEditing] = useState(initialEditMode ?? false);
   const [draft, setDraft] = useState<Meal>({
     ...meal,
-    ingredients: [...meal.ingredients],
+    serves: meal.serves ?? 1,
+    ingredients: meal.ingredients.map((ing) => ({ ...ing })),
     procedure: [...meal.procedure],
   });
 
+  // Keep base ingredient amounts to scale from, not compound on each change
+  const [baseIngredients, setBaseIngredients] = useState(() =>
+    meal.ingredients.map((ing) => ({ ...ing })),
+  );
+  const [baseServes, setBaseServes] = useState(() => meal.serves ?? 1);
+
   useEffect(() => {
-    setDraft({
+    const newDraft = {
       ...meal,
-      ingredients: [...meal.ingredients],
+      serves: meal.serves ?? 1,
+      ingredients: meal.ingredients.map((ing) => ({ ...ing })),
       procedure: [...meal.procedure],
-    });
+    };
+    setDraft(newDraft);
+    setBaseIngredients(meal.ingredients.map((ing) => ({ ...ing })));
+    setBaseServes(meal.serves ?? 1);
+    setViewServes(meal.serves ?? 1);
     setIsEditing(initialEditMode ?? false);
   }, [meal, initialEditMode]);
 
@@ -48,16 +71,24 @@ export function MealModal({
   }, [onClose, isEditing]);
 
   function discardEdits() {
-    setDraft({
+    const reset = {
       ...meal,
-      ingredients: [...meal.ingredients],
+      serves: meal.serves ?? 1,
+      ingredients: meal.ingredients.map((ing) => ({ ...ing })),
       procedure: [...meal.procedure],
-    });
+    };
+    setDraft(reset);
+    setBaseIngredients(meal.ingredients.map((ing) => ({ ...ing })));
+    setBaseServes(meal.serves ?? 1);
+    setViewServes(meal.serves ?? 1);
     setIsEditing(false);
   }
 
   function handleSave() {
     onSave(draft);
+    // Update base so further serves changes scale from the saved state
+    setBaseIngredients(draft.ingredients.map((ing) => ({ ...ing })));
+    setBaseServes(draft.serves);
     setIsEditing(false);
   }
 
@@ -73,11 +104,33 @@ export function MealModal({
     }));
   }
 
-  function setListItem(
-    list: "ingredients" | "procedure",
+  function setIngredient(
     index: number,
+    field: keyof Ingredient,
     value: string,
   ) {
+    setDraft((prev) => {
+      const copy = prev.ingredients.map((ing) => ({ ...ing }));
+      copy[index] = { ...copy[index], [field]: value };
+      return { ...prev, ingredients: copy };
+    });
+  }
+
+  function addIngredient() {
+    setDraft((prev) => ({
+      ...prev,
+      ingredients: [...prev.ingredients, emptyIngredient()],
+    }));
+  }
+
+  function removeIngredient(index: number) {
+    setDraft((prev) => ({
+      ...prev,
+      ingredients: prev.ingredients.filter((_, i) => i !== index),
+    }));
+  }
+
+  function setListItem(list: "procedure", index: number, value: string) {
     setDraft((prev) => {
       const copy = [...prev[list]];
       copy[index] = value;
@@ -85,16 +138,39 @@ export function MealModal({
     });
   }
 
-  function addListItem(list: "ingredients" | "procedure") {
+  function addListItem(list: "procedure") {
     setDraft((prev) => ({ ...prev, [list]: [...prev[list], ""] }));
   }
 
-  function removeListItem(list: "ingredients" | "procedure", index: number) {
+  function removeListItem(list: "procedure", index: number) {
     setDraft((prev) => ({
       ...prev,
       [list]: prev[list].filter((_, i) => i !== index),
     }));
   }
+
+  function setServes(value: string) {
+    const n = parseInt(value, 10);
+    const newServes = isNaN(n) || n < 1 ? 1 : n;
+    const ratio = newServes / baseServes;
+    setDraft((prev) => ({
+      ...prev,
+      serves: newServes,
+      ingredients: baseIngredients.map((ing) => {
+        const num = parseFloat(ing.amount);
+        if (!isNaN(num)) {
+          return {
+            ...ing,
+            amount: parseFloat((num * ratio).toFixed(2)).toString(),
+          };
+        }
+        return ing;
+      }),
+    }));
+  }
+
+  // View-mode serving scaler — doesn't affect saved data
+  const [viewServes, setViewServes] = useState<number>(meal.serves ?? 1);
 
   const display = isEditing ? draft : meal;
 
@@ -185,24 +261,107 @@ export function MealModal({
             ))}
           </div>
 
+          {/* Serves — always visible, scales ingredients in view mode */}
+          <div className="serves-row">
+            <label className="modal-serves-label">{T.serves}</label>
+            <button
+              className="serves-row__step-btn"
+              onClick={() => {
+                if (isEditing) setServes(String(Math.max(1, draft.serves - 1)));
+                else setViewServes((v) => Math.max(1, v - 1));
+              }}
+              aria-label="-1 porce"
+            >
+              −
+            </button>
+            <input
+              className="modal-input serves-row__input"
+              type="number"
+              min={1}
+              value={isEditing ? draft.serves : viewServes}
+              onChange={(e) => {
+                if (isEditing) setServes(e.target.value);
+                else {
+                  const n = parseInt(e.target.value, 10);
+                  setViewServes(isNaN(n) || n < 1 ? 1 : n);
+                }
+              }}
+            />
+            <button
+              className="serves-row__step-btn"
+              onClick={() => {
+                if (isEditing) setServes(String(draft.serves + 1));
+                else setViewServes((v) => v + 1);
+              }}
+              aria-label="+1 porce"
+            >
+              +
+            </button>
+          </div>
+
+          {/* Meal type badges — edit mode only */}
+          {isEditing && (
+            <div className="modal-section">
+              <h3 className="modal-section__title">{T.mealTypeLabel}</h3>
+              <div className="meal-type-badges">
+                {MEAL_TYPE_DEFS.map(({ type, label, emoji }) => {
+                  const active = (draft.mealTypes ?? []).includes(type);
+                  return (
+                    <button
+                      key={type}
+                      type="button"
+                      className={`meal-type-badge${active ? " meal-type-badge--active" : ""}`}
+                      onClick={() =>
+                        setField(
+                          "mealTypes",
+                          active
+                            ? (draft.mealTypes ?? []).filter((t) => t !== type)
+                            : [...(draft.mealTypes ?? []), type],
+                        )
+                      }
+                    >
+                      {emoji} {label}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
           {/* Ingredients */}
           <div className="modal-section">
             <h3 className="modal-section__title">{T.ingredients}</h3>
             {isEditing ? (
               <div className="modal-edit-list">
-                {draft.ingredients.map((item, i) => (
-                  <div key={i} className="modal-edit-list__row">
+                {draft.ingredients.map((ing, i) => (
+                  <div key={i} className="ingredient-row">
                     <input
-                      className="modal-input"
-                      value={item}
+                      className="modal-input ingredient-row__amount"
+                      type="text"
+                      inputMode="decimal"
+                      value={ing.amount}
                       onChange={(e) =>
-                        setListItem("ingredients", i, e.target.value)
+                        setIngredient(i, "amount", e.target.value)
                       }
-                      placeholder={T.ingredientPlaceholder(i)}
+                      placeholder={T.ingredientAmountPlaceholder}
+                    />
+                    <input
+                      className="modal-input ingredient-row__unit"
+                      type="text"
+                      value={ing.unit}
+                      onChange={(e) => setIngredient(i, "unit", e.target.value)}
+                      placeholder={T.ingredientUnitPlaceholder}
+                    />
+                    <input
+                      className="modal-input ingredient-row__name"
+                      type="text"
+                      value={ing.name}
+                      onChange={(e) => setIngredient(i, "name", e.target.value)}
+                      placeholder={T.ingredientNamePlaceholder(i)}
                     />
                     <button
                       className="modal-edit-list__remove"
-                      onClick={() => removeListItem("ingredients", i)}
+                      onClick={() => removeIngredient(i)}
                       aria-label={T.removeIngredient}
                       title={T.removeIngredient}
                     >
@@ -210,18 +369,30 @@ export function MealModal({
                     </button>
                   </div>
                 ))}
-                <button
-                  className="modal-add-btn"
-                  onClick={() => addListItem("ingredients")}
-                >
+                <button className="modal-add-btn" onClick={addIngredient}>
                   {T.addIngredient}
                 </button>
               </div>
             ) : (
               <ul className="modal-ingredients">
-                {display.ingredients.map((item, i) => (
-                  <li key={i}>{item}</li>
-                ))}
+                {display.ingredients.map((ing, i) => {
+                  const baseServeCount = display.serves ?? 1;
+                  const ratio = viewServes / baseServeCount;
+                  let scaledAmount = ing.amount;
+                  const num = parseFloat(ing.amount);
+                  if (!isNaN(num)) {
+                    scaledAmount = parseFloat(
+                      (num * ratio).toFixed(2),
+                    ).toString();
+                  }
+                  return (
+                    <li key={i}>
+                      {[scaledAmount, ing.unit, ing.name]
+                        .filter(Boolean)
+                        .join(" ")}
+                    </li>
+                  );
+                })}
               </ul>
             )}
           </div>

@@ -2,7 +2,7 @@
 export const T = {
   appTitle: "🥗 Jídelníček",
   appSubtitle: "Naplánujte svůj týden, jezte zdravě každý den",
-  library: "📚 Knihovna",
+  library: "🥘 Knihovna",
   export: "⬇ Export",
   exportLibrary: "⬇ Export knihovny",
   import: "⬆ Import",
@@ -34,6 +34,16 @@ export const T = {
   carbs: "Sacharidy",
   fat: "Tuky",
   removeIngredient: "Odebrat ingredienci",
+  ingredientAmountPlaceholder: "Množství",
+  ingredientUnitPlaceholder: "Jedn.",
+  ingredientNamePlaceholder: (i: number) => `Ingredience ${i + 1}`,
+
+  // Serves / scaling
+  serves: "Porce",
+  scaleBtn: "Přepočítat",
+  scaleTo: "Přepočítat na",
+  servesBase: (n: number) =>
+    `Základní recept: ${n} ${n === 1 ? "porce" : n < 5 ? "porce" : "porcí"}`,
   removeStep: "Odebrat krok",
 
   // SlotPicker
@@ -47,11 +57,19 @@ export const T = {
   remove: "🗑 Odebrat",
 
   // MealLibrary
-  mealLibrary: "📚 Knihovna jídel",
+  mealLibrary: "🥘 Knihovna jídel",
   newMeal: "+ Nové jídlo",
   noMealsYet: "Zatím žádná jídla. Klikněte na '+ Nové jídlo'.",
   editMealBtn: "✏️",
   deleteMealBtn: "🗑",
+  filterAll: "Vše",
+  filterFavourites: "⭐ Oblíbené",
+  filterLabel: "Filtr",
+  mealTypeLabel: "Typ jídla",
+  mealTypeBreakfast: "Snídaně",
+  mealTypeSnack: "Svačina",
+  mealTypeLunch: "Oběd",
+  mealTypeDinner: "Večeře",
 
   // Import error
   invalidFile:
@@ -93,6 +111,20 @@ export const T = {
   backToCurrent: "← Aktuální týden",
   noSavedWeeks: "Zatím nejsou žádné uložené týdny.",
   weekLabel: (key: string) => `Týden ${key}`,
+
+  addToShoppingList: "Přidat do nákupního seznamu",
+  favourite: "Přidat mezi oblíbené",
+  unfavourite: "Odebrat z oblíbených",
+
+  // Shopping list
+  shoppingList: "🛒 Nákupní seznam",
+  shoppingListEmpty: "Nákupní seznam je prázdný. Přidejte jídla z plánu.",
+  clearList: "Vyprázdnit",
+  removeFromList: "Odebrat jídlo ze seznamu",
+  expandMeal: "Rozbalit",
+  collapseMeal: "Sbalit",
+  adHocPlaceholder: "Přidat položku…",
+  adHocAdd: "+ Přidat",
 
   lightMode: "☀️",
   darkMode: "🌙",

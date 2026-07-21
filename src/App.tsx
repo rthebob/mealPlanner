@@ -6,7 +6,10 @@ import { MealTable } from "./components/MealTable";
 import { MealModal } from "./components/MealModal";
 import { SlotPicker } from "./components/SlotPicker";
 import { DayPicker } from "./components/DayPicker";
-import { MealLibrary } from "./components/MealLibrary";
+import ShoppingList, {
+  type ShoppingListEntry,
+  type AdHocItem,
+} from "./components/ShoppingList";
 import {
   HistoryPicker,
   currentWeekKey,
@@ -14,6 +17,7 @@ import {
   weekLabel,
   isoWeekToDate,
 } from "./components/HistoryPicker";
+import { MealLibrary } from "./components/MealLibrary";
 import { T } from "./i18n";
 import "./App.css";
 
@@ -30,8 +34,8 @@ const SLOT_KEYS: MealKey[] = [
 // Migrate old format (null or single Meal object) → Meal[]
 function migrateSlot(value: unknown): Meal[] {
   if (!value) return [];
-  if (Array.isArray(value)) return value as Meal[];
-  return [value as Meal]; // was a single Meal object
+  const arr: unknown[] = Array.isArray(value) ? value : [value];
+  return arr.map(migrateMeal);
 }
 
 function migratePlan(plan: DayPlan[]): DayPlan[] {
@@ -44,6 +48,36 @@ function migratePlan(plan: DayPlan[]): DayPlan[] {
     }
     return migrated;
   });
+}
+
+// Migrate meal from old format (string[] ingredients) to Ingredient[]
+function migrateMeal(raw: unknown): Meal {
+  const m = raw as Record<string, unknown>;
+  const rawIngredients = m.ingredients;
+  const ingredients = Array.isArray(rawIngredients)
+    ? rawIngredients.map((ing: unknown) => {
+        if (typeof ing === "string") {
+          return { name: ing, amount: "", unit: "" };
+        }
+        return ing as import("./types").Ingredient;
+      })
+    : [];
+  const rawMealTypes = Array.isArray(m.mealTypes)
+    ? (m.mealTypes as string[])
+    : [];
+  const mealTypes = [
+    ...new Set(
+      rawMealTypes.map((t) =>
+        t === "morningSnack" || t === "afternoonSnack" ? "snack" : t,
+      ),
+    ),
+  ] as import("./types").MealType[];
+  return {
+    ...(m as unknown as Meal),
+    serves: typeof m.serves === "number" ? m.serves : 1,
+    ingredients,
+    mealTypes: mealTypes.length > 0 ? mealTypes : undefined,
+  };
 }
 
 const MEAL_KEY_LABELS: Record<MealKey, string> = {
@@ -92,10 +126,10 @@ function App() {
   const [library, setLibrary] = useState<Meal[]>(() => {
     try {
       const v = localStorage.getItem("mealplanner-library");
-      const raw: Meal[] = v ? JSON.parse(v) : DEFAULT_MEAL_LIBRARY;
-      // Deduplicate by id
+      const raw: unknown[] = v ? JSON.parse(v) : DEFAULT_MEAL_LIBRARY;
+      // Deduplicate by id and migrate legacy format
       const seen = new Set<string>();
-      return raw.filter((m) => {
+      return raw.map(migrateMeal).filter((m) => {
         if (seen.has(m.id)) return false;
         seen.add(m.id);
         return true;
@@ -200,6 +234,44 @@ function App() {
     mealIndex: number | null; // null = adding new, number = editing existing
   } | null>(null);
   const [showLibrary, setShowLibrary] = useState(false);
+  const [showShoppingList, setShowShoppingList] = useState(false);
+  const [shoppingList, setShoppingList] = useState<ShoppingListEntry[]>(() => {
+    try {
+      const v = localStorage.getItem("mealplanner-shopping");
+      return v
+        ? (JSON.parse(v) as ShoppingListEntry[]).map((e) => ({
+            ...e,
+            meal: migrateMeal(e.meal),
+          }))
+        : [];
+    } catch {
+      return [];
+    }
+  });
+  const [shoppingChecked, setShoppingChecked] = useState<Set<string>>(() => {
+    try {
+      const v = localStorage.getItem("mealplanner-shopping-checked");
+      return v ? new Set(JSON.parse(v) as string[]) : new Set();
+    } catch {
+      return new Set();
+    }
+  });
+  const [shoppingExpanded, setShoppingExpanded] = useState<Set<string>>(() => {
+    try {
+      const v = localStorage.getItem("mealplanner-shopping-expanded");
+      return v ? new Set(JSON.parse(v) as string[]) : new Set();
+    } catch {
+      return new Set();
+    }
+  });
+  const [shoppingAdHoc, setShoppingAdHoc] = useState<AdHocItem[]>(() => {
+    try {
+      const v = localStorage.getItem("mealplanner-shopping-adhoc");
+      return v ? (JSON.parse(v) as AdHocItem[]) : [];
+    } catch {
+      return [];
+    }
+  });
   const [showSlotPicker, setShowSlotPicker] = useState(false);
   const [editingMeal, setEditingMeal] = useState<Meal | null>(null);
   const [creatingNew, setCreatingNew] = useState(false);
@@ -433,6 +505,7 @@ function App() {
     setEditingMeal({
       id: crypto.randomUUID(),
       name: "",
+      serves: 1,
       ingredients: [],
       procedure: [],
       macros: { calories: 0, protein: 0, carbohydrates: 0, fat: 0 },
@@ -453,6 +526,91 @@ function App() {
     setEditingMeal(null);
     setCreatingNew(false);
     setActiveSlot(null);
+  }
+
+  function updateShoppingList(next: ShoppingListEntry[]) {
+    setShoppingList(next);
+    try {
+      localStorage.setItem("mealplanner-shopping", JSON.stringify(next));
+    } catch {}
+    // When clearing (empty list) also wipe checked and expanded state
+    if (next.length === 0) {
+      setShoppingChecked(new Set());
+      setShoppingExpanded(new Set());
+      setShoppingAdHoc([]);
+      try {
+        localStorage.removeItem("mealplanner-shopping-checked");
+        localStorage.removeItem("mealplanner-shopping-expanded");
+        localStorage.removeItem("mealplanner-shopping-adhoc");
+      } catch {}
+    }
+  }
+
+  function toggleShoppingChecked(key: string) {
+    setShoppingChecked((prev) => {
+      const next = new Set(prev);
+      if (next.has(key)) next.delete(key);
+      else next.add(key);
+      try {
+        localStorage.setItem(
+          "mealplanner-shopping-checked",
+          JSON.stringify([...next]),
+        );
+      } catch {}
+      return next;
+    });
+  }
+
+  function toggleShoppingExpanded(mealId: string) {
+    setShoppingExpanded((prev) => {
+      const next = new Set(prev);
+      if (next.has(mealId)) next.delete(mealId);
+      else next.add(mealId);
+      try {
+        localStorage.setItem(
+          "mealplanner-shopping-expanded",
+          JSON.stringify([...next]),
+        );
+      } catch {}
+      return next;
+    });
+  }
+
+  function addAdHocItem(item: AdHocItem) {
+    setShoppingAdHoc((prev) => {
+      const next = [...prev, item];
+      try {
+        localStorage.setItem(
+          "mealplanner-shopping-adhoc",
+          JSON.stringify(next),
+        );
+      } catch {}
+      return next;
+    });
+  }
+
+  function removeAdHocItem(id: string) {
+    setShoppingAdHoc((prev) => {
+      const next = prev.filter((i) => i.id !== id);
+      try {
+        localStorage.setItem(
+          "mealplanner-shopping-adhoc",
+          JSON.stringify(next),
+        );
+      } catch {}
+      return next;
+    });
+  }
+
+  function addToShoppingList(meal: Meal) {
+    setShoppingList((prev) => {
+      if (prev.some((e) => e.meal.id === meal.id)) return prev;
+      const next = [...prev, { meal, serves: meal.serves }];
+      try {
+        localStorage.setItem("mealplanner-shopping", JSON.stringify(next));
+      } catch {}
+      return next;
+    });
   }
 
   const activeExistingMeals = activeSlot
@@ -502,10 +660,12 @@ function App() {
               {T.library}
             </button>
             <button
-              className="app-library-btn"
-              onClick={() => setShowHistoryPicker(true)}
+              className="app-theme-btn"
+              onClick={() => setShowShoppingList(true)}
+              aria-label={T.shoppingList}
+              title={T.shoppingList}
             >
-              {T.historyBtn}
+              🛒
             </button>
             <div className="app-settings-wrap" ref={settingsRef}>
               <button
@@ -521,8 +681,16 @@ function App() {
                   <div className="app-settings-dropdown__title">
                     {T.settingsTitle}
                   </div>
+                  <button
+                    className="app-settings-item"
+                    onClick={() => {
+                      setShowHistoryPicker(true);
+                      setShowSettings(false);
+                    }}
+                  >
+                    {T.historyBtn}
+                  </button>
                   <button className="app-settings-item" onClick={toggleTheme}>
-                    {theme === "dark" ? T.lightMode : T.darkMode}&nbsp;
                     {theme === "dark" ? "Světlý motiv" : "Tmavý motiv"}
                   </button>
                   <button
@@ -770,6 +938,36 @@ function App() {
           library={library}
           onClose={() => setShowLibrary(false)}
           onChange={updateLibrary}
+          onAddToShoppingList={addToShoppingList}
+          onRemoveFromShoppingList={(id) =>
+            updateShoppingList(shoppingList.filter((e) => e.meal.id !== id))
+          }
+          shoppingListIds={new Set(shoppingList.map((e) => e.meal.id))}
+        />
+      )}
+
+      {showShoppingList && (
+        <ShoppingList
+          entries={shoppingList}
+          adHocItems={shoppingAdHoc}
+          checkedKeys={shoppingChecked}
+          expandedIds={shoppingExpanded}
+          onToggleChecked={toggleShoppingChecked}
+          onToggleExpanded={toggleShoppingExpanded}
+          onClose={() => setShowShoppingList(false)}
+          onRemoveMeal={(id) =>
+            updateShoppingList(shoppingList.filter((e) => e.meal.id !== id))
+          }
+          onClear={() => updateShoppingList([])}
+          onUpdateServes={(id, serves) =>
+            updateShoppingList(
+              shoppingList.map((e) =>
+                e.meal.id === id ? { ...e, serves } : e,
+              ),
+            )
+          }
+          onAddAdHoc={addAdHocItem}
+          onRemoveAdHoc={removeAdHocItem}
         />
       )}
     </div>
