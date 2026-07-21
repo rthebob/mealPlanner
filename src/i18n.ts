@@ -156,7 +156,7 @@ export const T = {
   libraryQrImportSuccess: (n: number) =>
     `✓ Importováno ${n} ${n === 1 ? "jídlo" : n < 5 ? "jídla" : "jídel"}!`,
   shareLibrary: "📲 Sdílet",
-  shareLibraryAll: "📚 Celou knihovnu",
+  shareLibraryAll: "🥘 Celou knihovnu",
   shareMeal: "📲",
 
   lightMode: "☀️",

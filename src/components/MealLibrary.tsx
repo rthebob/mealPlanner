@@ -330,7 +330,7 @@ export function MealLibrary({
   const [libraryQR, setLibraryQR] = useState<{ meals: Meal[] } | null>(null);
   const [showShareDropdown, setShowShareDropdown] = useState(false);
   const shareTriggerRef = useRef<HTMLButtonElement>(null);
-  const [menuPos, setMenuPos] = useState<{ top: number; right: number } | null>(
+  const [menuPos, setMenuPos] = useState<{ top: number; left: number } | null>(
     null,
   );
 
@@ -390,10 +390,14 @@ export function MealLibrary({
               onClick={() => {
                 if (!showShareDropdown && shareTriggerRef.current) {
                   const r = shareTriggerRef.current.getBoundingClientRect();
-                  setMenuPos({
-                    top: r.bottom + 6,
-                    right: window.innerWidth - r.right,
-                  });
+                  const menuWidth = Math.min(240, window.innerWidth - 16);
+                  // Align right edge of menu to right edge of button, clamped to viewport
+                  const idealLeft = r.right - menuWidth;
+                  const left = Math.max(
+                    8,
+                    Math.min(idealLeft, window.innerWidth - menuWidth - 8),
+                  );
+                  setMenuPos({ top: r.bottom + 6, left });
                 }
                 setShowShareDropdown((v) => !v);
               }}
@@ -406,7 +410,11 @@ export function MealLibrary({
                 <div
                   ref={menuRef}
                   className="library-share-dropdown__menu"
-                  style={{ top: menuPos.top, right: menuPos.right }}
+                  style={{
+                    top: menuPos.top,
+                    left: menuPos.left,
+                    width: Math.min(240, window.innerWidth - 16),
+                  }}
                 >
                   <button
                     className="library-share-dropdown__item"
