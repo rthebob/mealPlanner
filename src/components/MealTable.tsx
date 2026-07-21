@@ -1,11 +1,15 @@
 import type { DayPlan, MacroGoals } from "../types";
-import { MealCard } from "./MealCard";
+import { SlotCell } from "./MealCard";
 import { T } from "../i18n";
 import "./MealTable.css";
 
 interface MealTableProps {
   days: DayPlan[];
-  onCellClick: (dayIndex: number, mealKey: keyof Omit<DayPlan, "day">) => void;
+  onCellClick: (
+    dayIndex: number,
+    mealKey: keyof Omit<DayPlan, "day">,
+    mealIndex: number | null,
+  ) => void;
   goals: MacroGoals;
   readOnly?: boolean;
 }
@@ -26,13 +30,12 @@ interface MacroMeta {
   key: keyof MacroGoals;
   label: string;
   unit: string;
-  color: string;
 }
 const MACRO_DEFS: MacroMeta[] = [
-  { key: "calories", label: T.calories, unit: "kcal", color: "#e94560" },
-  { key: "protein", label: T.protein, unit: "g", color: "#3b82f6" },
-  { key: "carbohydrates", label: T.carbs, unit: "g", color: "#22c55e" },
-  { key: "fat", label: T.fat, unit: "g", color: "#f59e0b" },
+  { key: "calories", label: T.calories, unit: "kcal" },
+  { key: "protein", label: T.protein, unit: "g" },
+  { key: "carbohydrates", label: T.carbs, unit: "g" },
+  { key: "fat", label: T.fat, unit: "g" },
 ];
 
 // ── Single mini donut ──────────────────────────────────────────────────────
@@ -41,13 +44,11 @@ function MiniDonut({
   goal,
   label,
   unit,
-  color,
 }: {
   current: number;
   goal: number;
   label: string;
   unit: string;
-  color: string;
 }) {
   const SIZE = 72;
   const cx = SIZE / 2;
@@ -55,12 +56,16 @@ function MiniDonut({
   const R = 26;
   const STROKE = 7;
   const circ = 2 * Math.PI * R;
-  const pct = goal > 0 ? Math.min(current / goal, 1) : 0;
-  const over = goal > 0 && current > goal;
-  const fill = over ? "#e94560" : color;
+  const rawPct = goal > 0 ? current / goal : 0;
+  const pct = Math.min(rawPct, 1);
   const dash = pct * circ;
   const gap = circ - dash;
-  const pctLabel = goal > 0 ? Math.round(pct * 100) : 0;
+  const pctLabel = goal > 0 ? Math.round(rawPct * 100) : 0;
+
+  // orange = under goal, green = at/near goal (85–120 %), red = over 120 %
+  const fill =
+    rawPct > 1.2 ? "#e94560" : rawPct >= 0.85 ? "#22c55e" : "#f59e0b";
+  const over = rawPct > 1.2;
 
   return (
     <div className="mini-donut">
@@ -132,28 +137,27 @@ function DayTotals({ day, goals }: { day: DayPlan; goals: MacroGoals }) {
 
   const totals = mealSlots.reduce(
     (acc, key) => {
-      const meal = day[key];
-      if (!meal) return acc;
-      return {
-        calories: acc.calories + meal.macros.calories,
-        protein: acc.protein + meal.macros.protein,
-        carbohydrates: acc.carbohydrates + meal.macros.carbohydrates,
-        fat: acc.fat + meal.macros.fat,
-      };
+      const meals = day[key];
+      for (const meal of meals) {
+        acc.calories += meal.macros.calories;
+        acc.protein += meal.macros.protein;
+        acc.carbohydrates += meal.macros.carbohydrates;
+        acc.fat += meal.macros.fat;
+      }
+      return acc;
     },
     { calories: 0, protein: 0, carbohydrates: 0, fat: 0 },
   );
 
   return (
     <div className="day-totals">
-      {MACRO_DEFS.map(({ key, label, unit, color }) => (
+      {MACRO_DEFS.map(({ key, label, unit }) => (
         <MiniDonut
           key={key}
           current={totals[key]}
           goal={goals[key]}
           label={label}
           unit={unit}
-          color={color}
         />
       ))}
     </div>
@@ -199,10 +203,14 @@ export function MealTable({
                   key={`${d.day}-${key}`}
                   className={`meal-table__cell${isSnack ? " meal-table__cell--snack" : ""}`}
                 >
-                  <MealCard
-                    meal={d[key]}
-                    onClick={() => !readOnly && onCellClick(dayIndex, key)}
+                  <SlotCell
+                    meals={d[key]}
+                    onMealClick={(mealIndex) =>
+                      !readOnly && onCellClick(dayIndex, key, mealIndex)
+                    }
+                    onAdd={() => !readOnly && onCellClick(dayIndex, key, null)}
                     compact={isSnack}
+                    readOnly={readOnly}
                   />
                 </div>
               ))}

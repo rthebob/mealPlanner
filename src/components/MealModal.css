@@ -31,9 +31,26 @@
     width: 100%;
     max-width: 600px;
     max-height: 90vh;
-    overflow-y: auto;
+    overflow: hidden;
     box-shadow: 0 20px 60px rgba(0, 0, 0, 0.6);
     animation: slideUp 0.2s ease;
+}
+
+.modal-card__body {
+    flex: 1;
+    overflow-y: auto;
+    min-height: 0;
+    padding-right: 4px;
+}
+
+.modal-card__footer {
+    display: flex;
+    gap: 8px;
+    justify-content: flex-end;
+    padding-top: 16px;
+    margin-top: 4px;
+    border-top: 1px solid var(--color-border);
+    flex-shrink: 0;
 }
 
 @keyframes slideUp {

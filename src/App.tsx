@@ -19,6 +19,33 @@ import "./App.css";
 
 type MealKey = keyof Omit<DayPlan, "day">;
 
+const SLOT_KEYS: MealKey[] = [
+  "breakfast",
+  "morningSnack",
+  "lunch",
+  "afternoonSnack",
+  "dinner",
+];
+
+// Migrate old format (null or single Meal object) → Meal[]
+function migrateSlot(value: unknown): Meal[] {
+  if (!value) return [];
+  if (Array.isArray(value)) return value as Meal[];
+  return [value as Meal]; // was a single Meal object
+}
+
+function migratePlan(plan: DayPlan[]): DayPlan[] {
+  return plan.map((day) => {
+    const migrated = { ...day };
+    for (const key of SLOT_KEYS) {
+      (migrated as Record<string, unknown>)[key] = migrateSlot(
+        (day as Record<string, unknown>)[key],
+      );
+    }
+    return migrated;
+  });
+}
+
 const MEAL_KEY_LABELS: Record<MealKey, string> = {
   breakfast: T.breakfast,
   morningSnack: T.morningSnack,
@@ -57,7 +84,7 @@ function App() {
   const [weekPlan, setWeekPlan] = useState<DayPlan[]>(() => {
     try {
       const v = localStorage.getItem("mealplanner-weekplan");
-      return v ? JSON.parse(v) : WEEK_PLAN;
+      return v ? migratePlan(JSON.parse(v)) : WEEK_PLAN;
     } catch {
       return WEEK_PLAN;
     }
@@ -65,7 +92,14 @@ function App() {
   const [library, setLibrary] = useState<Meal[]>(() => {
     try {
       const v = localStorage.getItem("mealplanner-library");
-      return v ? JSON.parse(v) : DEFAULT_MEAL_LIBRARY;
+      const raw: Meal[] = v ? JSON.parse(v) : DEFAULT_MEAL_LIBRARY;
+      // Deduplicate by id
+      const seen = new Set<string>();
+      return raw.filter((m) => {
+        if (seen.has(m.id)) return false;
+        seen.add(m.id);
+        return true;
+      });
     } catch {
       return DEFAULT_MEAL_LIBRARY;
     }
@@ -81,7 +115,11 @@ function App() {
   const [history, setHistory] = useState<WeekHistory>(() => {
     try {
       const v = localStorage.getItem("mealplanner-history");
-      return v ? JSON.parse(v) : {};
+      if (!v) return {};
+      const raw = JSON.parse(v) as Record<string, DayPlan[]>;
+      return Object.fromEntries(
+        Object.entries(raw).map(([k, plan]) => [k, migratePlan(plan)]),
+      );
     } catch {
       return {};
     }
@@ -159,13 +197,34 @@ function App() {
   const [activeSlot, setActiveSlot] = useState<{
     dayIndex: number;
     mealKey: MealKey;
+    mealIndex: number | null; // null = adding new, number = editing existing
   } | null>(null);
   const [showLibrary, setShowLibrary] = useState(false);
   const [showSlotPicker, setShowSlotPicker] = useState(false);
   const [editingMeal, setEditingMeal] = useState<Meal | null>(null);
   const [creatingNew, setCreatingNew] = useState(false);
-  const [viewMode, setViewMode] = useState<"week" | "day">("week");
-  const [focusedDayIndex, setFocusedDayIndex] = useState(0);
+  const [viewMode, setViewMode] = useState<"week" | "day">(() => {
+    try {
+      return (
+        (localStorage.getItem("mealplanner-viewmode") as "week" | "day") ??
+        "week"
+      );
+    } catch {
+      return "week";
+    }
+  });
+  const [focusedDayIndex, setFocusedDayIndex] = useState(() => {
+    try {
+      const vm = localStorage.getItem("mealplanner-viewmode");
+      if (vm === "day") {
+        const nd = Number(localStorage.getItem("mealplanner-numdays") ?? 3);
+        const jsDow = new Date().getDay();
+        const todayDow = jsDow === 0 ? 6 : jsDow - 1;
+        return todayDow < nd ? todayDow : 0;
+      }
+    } catch {}
+    return 0;
+  });
 
   function updateNumDays(n: number) {
     setNumDays(n);
@@ -185,7 +244,14 @@ function App() {
   }
 
   function updateLibrary(next: Meal[]) {
-    setLibrary(next);
+    // Deduplicate by id to prevent key collisions
+    const seen = new Set<string>();
+    const deduped = next.filter((m) => {
+      if (seen.has(m.id)) return false;
+      seen.add(m.id);
+      return true;
+    });
+    setLibrary(deduped);
     try {
       localStorage.setItem("mealplanner-library", JSON.stringify(next));
     } catch {}
@@ -236,6 +302,17 @@ function App() {
     URL.revokeObjectURL(url);
   }
 
+  function handleExportLibrary() {
+    const data = JSON.stringify({ library }, null, 2);
+    const blob = new Blob([data], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "meal-library.json";
+    a.click();
+    URL.revokeObjectURL(url);
+  }
+
   function handleImport(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -264,50 +341,90 @@ function App() {
     e.target.value = "";
   }
 
-  function handleCellClick(dayIndex: number, mealKey: MealKey) {
+  function handleCellClick(
+    dayIndex: number,
+    mealKey: MealKey,
+    mealIndex: number | null,
+  ) {
     if (!isCurrentWeek) return;
     const realIndex = viewMode === "day" ? clampedFocused : dayIndex;
-    setActiveSlot({ dayIndex: realIndex, mealKey });
-    setShowSlotPicker(true);
+    setActiveSlot({ dayIndex: realIndex, mealKey, mealIndex });
+    if (mealIndex === null) {
+      setShowSlotPicker(true);
+    } else {
+      // Clicking an existing meal opens the slot picker with that meal pre-focused
+      setShowSlotPicker(true);
+    }
   }
 
-  function assignMealToSlot(meal: Meal) {
+  function addMealToSlot(meal: Meal) {
     if (!activeSlot) return;
     updateWeekPlan((prev) => {
       const copy = prev.map((d) => ({ ...d }));
       copy[activeSlot.dayIndex] = {
         ...copy[activeSlot.dayIndex],
-        [activeSlot.mealKey]: meal,
+        [activeSlot.mealKey]: [
+          ...copy[activeSlot.dayIndex][activeSlot.mealKey],
+          meal,
+        ],
       };
       return copy;
     });
   }
 
-  function handleSlotSelect(meal: Meal) {
-    assignMealToSlot(meal);
+  function updateMealInSlot(meal: Meal) {
+    if (!activeSlot || activeSlot.mealIndex === null) return;
+    updateWeekPlan((prev) => {
+      const copy = prev.map((d) => ({ ...d }));
+      const meals = [...copy[activeSlot.dayIndex][activeSlot.mealKey]];
+      meals[activeSlot.mealIndex!] = meal;
+      copy[activeSlot.dayIndex] = {
+        ...copy[activeSlot.dayIndex],
+        [activeSlot.mealKey]: meals,
+      };
+      return copy;
+    });
+  }
+
+  function removeMealFromSlot(mealIndex: number) {
+    if (!activeSlot) return;
+    updateWeekPlan((prev) => {
+      const copy = prev.map((d) => ({ ...d }));
+      const meals = copy[activeSlot.dayIndex][activeSlot.mealKey].filter(
+        (_, i) => i !== mealIndex,
+      );
+      copy[activeSlot.dayIndex] = {
+        ...copy[activeSlot.dayIndex],
+        [activeSlot.mealKey]: meals,
+      };
+      return copy;
+    });
+  }
+
+  function handleSlotAdd(meal: Meal) {
+    addMealToSlot(meal);
     setShowSlotPicker(false);
     setActiveSlot(null);
   }
 
-  function handleSlotEditExisting() {
+  function handleSlotEdit(mealIndex: number) {
     if (!activeSlot) return;
+    const meal = weekPlan[activeSlot.dayIndex][activeSlot.mealKey][mealIndex];
+    setActiveSlot({ ...activeSlot, mealIndex });
     setShowSlotPicker(false);
-    setEditingMeal(weekPlan[activeSlot.dayIndex][activeSlot.mealKey]);
+    setEditingMeal(meal);
     setCreatingNew(false);
   }
 
-  function handleSlotClear() {
-    if (!activeSlot) return;
-    updateWeekPlan((prev) => {
-      const copy = prev.map((d) => ({ ...d }));
-      copy[activeSlot.dayIndex] = {
-        ...copy[activeSlot.dayIndex],
-        [activeSlot.mealKey]: null,
-      };
-      return copy;
-    });
-    setShowSlotPicker(false);
-    setActiveSlot(null);
+  function handleSlotRemove(mealIndex: number) {
+    removeMealFromSlot(mealIndex);
+    // Close picker if no meals remain after removal
+    const remaining =
+      weekPlan[activeSlot!.dayIndex][activeSlot!.mealKey].length - 1;
+    if (remaining === 0) {
+      setShowSlotPicker(false);
+      setActiveSlot(null);
+    }
   }
 
   function handleSlotCreateNew() {
@@ -316,7 +433,6 @@ function App() {
     setEditingMeal({
       id: crypto.randomUUID(),
       name: "",
-      description: "",
       ingredients: [],
       procedure: [],
       macros: { calories: 0, protein: 0, carbohydrates: 0, fat: 0 },
@@ -324,7 +440,11 @@ function App() {
   }
 
   function handleModalSave(updated: Meal) {
-    assignMealToSlot(updated);
+    if (creatingNew || activeSlot?.mealIndex === null) {
+      addMealToSlot(updated);
+    } else {
+      updateMealInSlot(updated);
+    }
     setEditingMeal(null);
     setCreatingNew(false);
     setActiveSlot(null);
@@ -335,9 +455,9 @@ function App() {
     setActiveSlot(null);
   }
 
-  const activeExistingMeal = activeSlot
+  const activeExistingMeals = activeSlot
     ? weekPlan[activeSlot.dayIndex][activeSlot.mealKey]
-    : null;
+    : [];
   const slotLabel = activeSlot
     ? `${weekPlan[activeSlot.dayIndex].day} — ${MEAL_KEY_LABELS[activeSlot.mealKey]}`
     : "";
@@ -417,6 +537,15 @@ function App() {
                   <button
                     className="app-settings-item"
                     onClick={() => {
+                      handleExportLibrary();
+                      setShowSettings(false);
+                    }}
+                  >
+                    {T.exportLibrary}
+                  </button>
+                  <button
+                    className="app-settings-item"
+                    onClick={() => {
                       importRef.current?.click();
                       setShowSettings(false);
                     }}
@@ -474,13 +603,26 @@ function App() {
           <div className="view-toggle">
             <button
               className={`view-toggle__btn${viewMode === "week" ? " view-toggle__btn--active" : ""}`}
-              onClick={() => setViewMode("week")}
+              onClick={() => {
+                setViewMode("week");
+                try {
+                  localStorage.setItem("mealplanner-viewmode", "week");
+                } catch {}
+              }}
             >
               {T.viewWeek}
             </button>
             <button
               className={`view-toggle__btn${viewMode === "day" ? " view-toggle__btn--active" : ""}`}
-              onClick={() => setViewMode("day")}
+              onClick={() => {
+                setViewMode("day");
+                try {
+                  localStorage.setItem("mealplanner-viewmode", "day");
+                } catch {}
+                // Jump to today when switching to day view
+                setViewingWeekKey(null);
+                setFocusedDayIndex(todayDowIndex < numDays ? todayDowIndex : 0);
+              }}
             >
               {T.viewDay}
             </button>
@@ -602,14 +744,14 @@ function App() {
         <SlotPicker
           slotLabel={slotLabel}
           library={library}
-          existingMeal={activeExistingMeal}
+          existingMeals={activeExistingMeals}
           onClose={() => {
             setShowSlotPicker(false);
             setActiveSlot(null);
           }}
-          onSelect={handleSlotSelect}
-          onEditExisting={handleSlotEditExisting}
-          onClear={handleSlotClear}
+          onAdd={handleSlotAdd}
+          onEdit={handleSlotEdit}
+          onRemove={handleSlotRemove}
           onCreateNew={handleSlotCreateNew}
         />
       )}

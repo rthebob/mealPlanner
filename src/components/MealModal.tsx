@@ -114,23 +114,16 @@ export function MealModal({
       aria-label={display.name}
     >
       <div className="modal-card" onClick={(e) => e.stopPropagation()}>
-        {/* Action bar */}
+        {/* Action bar — always visible at top */}
         <div className="modal-actions">
           {isEditing ? (
-            <>
-              <button
-                className="modal-btn modal-btn--save"
-                onClick={handleSave}
-              >
-                {T.save}
-              </button>
-              <button
-                className="modal-btn modal-btn--cancel"
-                onClick={discardEdits}
-              >
-                {T.cancel}
-              </button>
-            </>
+            <button
+              className="modal-close"
+              onClick={discardEdits}
+              aria-label="Zavřít"
+            >
+              ×
+            </button>
           ) : (
             <>
               <button
@@ -151,140 +144,146 @@ export function MealModal({
           )}
         </div>
 
-        {/* Header */}
-        <div className="modal-header">
-          {isEditing ? (
-            <>
+        {/* Scrollable body */}
+        <div className="modal-card__body">
+          {/* Header */}
+          <div className="modal-header">
+            {isEditing ? (
               <input
                 className="modal-input modal-input--title"
                 value={draft.name}
                 onChange={(e) => setField("name", e.target.value)}
                 placeholder={T.mealNamePlaceholder}
               />
-              <textarea
-                className="modal-input modal-input--description"
-                value={draft.description}
-                onChange={(e) => setField("description", e.target.value)}
-                placeholder={T.descriptionPlaceholder}
-                rows={2}
-              />
-            </>
-          ) : (
-            <>
+            ) : (
               <h2 className="modal-title">{display.name}</h2>
-              <p className="modal-description">{display.description}</p>
-            </>
-          )}
-        </div>
+            )}
+          </div>
 
-        {/* Macros */}
-        <div className="modal-macros">
-          {MACRO_DEFS.map(({ key, icon, label, unit }) => (
-            <div key={key} className="macro-badge">
-              <span className="macro-badge__icon">{icon}</span>
-              {isEditing ? (
-                <input
-                  className="macro-badge__input"
-                  type="number"
-                  min={0}
-                  value={draft.macros[key]}
-                  onChange={(e) => setMacro(key, e.target.value)}
-                  aria-label={label}
-                />
-              ) : (
-                <span className="macro-badge__value">
-                  {display.macros[key]}
-                  {unit !== "kcal" ? unit : ""}
-                </span>
-              )}
-              <span className="macro-badge__label">{label}</span>
-            </div>
-          ))}
-        </div>
-
-        {/* Ingredients */}
-        <div className="modal-section">
-          <h3 className="modal-section__title">{T.ingredients}</h3>
-          {isEditing ? (
-            <div className="modal-edit-list">
-              {draft.ingredients.map((item, i) => (
-                <div key={i} className="modal-edit-list__row">
+          {/* Macros */}
+          <div className="modal-macros">
+            {MACRO_DEFS.map(({ key, icon, label, unit }) => (
+              <div key={key} className="macro-badge">
+                <span className="macro-badge__icon">{icon}</span>
+                {isEditing ? (
                   <input
-                    className="modal-input"
-                    value={item}
-                    onChange={(e) =>
-                      setListItem("ingredients", i, e.target.value)
-                    }
-                    placeholder={T.ingredientPlaceholder(i)}
+                    className="macro-badge__input"
+                    type="number"
+                    min={0}
+                    value={draft.macros[key]}
+                    onChange={(e) => setMacro(key, e.target.value)}
+                    aria-label={label}
                   />
-                  <button
-                    className="modal-edit-list__remove"
-                    onClick={() => removeListItem("ingredients", i)}
-                    aria-label={T.removeIngredient}
-                    title={T.removeIngredient}
-                  >
-                    ×
-                  </button>
-                </div>
-              ))}
-              <button
-                className="modal-add-btn"
-                onClick={() => addListItem("ingredients")}
-              >
-                {T.addIngredient}
-              </button>
-            </div>
-          ) : (
-            <ul className="modal-ingredients">
-              {display.ingredients.map((item, i) => (
-                <li key={i}>{item}</li>
-              ))}
-            </ul>
-          )}
+                ) : (
+                  <span className="macro-badge__value">
+                    {display.macros[key]}
+                    {unit !== "kcal" ? unit : ""}
+                  </span>
+                )}
+                <span className="macro-badge__label">{label}</span>
+              </div>
+            ))}
+          </div>
+
+          {/* Ingredients */}
+          <div className="modal-section">
+            <h3 className="modal-section__title">{T.ingredients}</h3>
+            {isEditing ? (
+              <div className="modal-edit-list">
+                {draft.ingredients.map((item, i) => (
+                  <div key={i} className="modal-edit-list__row">
+                    <input
+                      className="modal-input"
+                      value={item}
+                      onChange={(e) =>
+                        setListItem("ingredients", i, e.target.value)
+                      }
+                      placeholder={T.ingredientPlaceholder(i)}
+                    />
+                    <button
+                      className="modal-edit-list__remove"
+                      onClick={() => removeListItem("ingredients", i)}
+                      aria-label={T.removeIngredient}
+                      title={T.removeIngredient}
+                    >
+                      ×
+                    </button>
+                  </div>
+                ))}
+                <button
+                  className="modal-add-btn"
+                  onClick={() => addListItem("ingredients")}
+                >
+                  {T.addIngredient}
+                </button>
+              </div>
+            ) : (
+              <ul className="modal-ingredients">
+                {display.ingredients.map((item, i) => (
+                  <li key={i}>{item}</li>
+                ))}
+              </ul>
+            )}
+          </div>
+
+          {/* Procedure */}
+          <div className="modal-section">
+            <h3 className="modal-section__title">{T.procedure}</h3>
+            {isEditing ? (
+              <div className="modal-edit-list">
+                {draft.procedure.map((step, i) => (
+                  <div key={i} className="modal-edit-list__row">
+                    <span className="modal-edit-list__step-num">{i + 1}.</span>
+                    <textarea
+                      className="modal-input modal-input--step"
+                      value={step}
+                      onChange={(e) =>
+                        setListItem("procedure", i, e.target.value)
+                      }
+                      placeholder={T.stepPlaceholder(i)}
+                      rows={2}
+                    />
+                    <button
+                      className="modal-edit-list__remove"
+                      onClick={() => removeListItem("procedure", i)}
+                      aria-label={T.removeStep}
+                      title={T.removeStep}
+                    >
+                      ×
+                    </button>
+                  </div>
+                ))}
+                <button
+                  className="modal-add-btn"
+                  onClick={() => addListItem("procedure")}
+                >
+                  {T.addStep}
+                </button>
+              </div>
+            ) : (
+              <ol className="modal-procedure">
+                {display.procedure.map((step, i) => (
+                  <li key={i}>{step}</li>
+                ))}
+              </ol>
+            )}
+          </div>
         </div>
 
-        {/* Procedure */}
-        <div className="modal-section">
-          <h3 className="modal-section__title">{T.procedure}</h3>
-          {isEditing ? (
-            <div className="modal-edit-list">
-              {draft.procedure.map((step, i) => (
-                <div key={i} className="modal-edit-list__row">
-                  <span className="modal-edit-list__step-num">{i + 1}.</span>
-                  <textarea
-                    className="modal-input modal-input--step"
-                    value={step}
-                    onChange={(e) =>
-                      setListItem("procedure", i, e.target.value)
-                    }
-                    placeholder={T.stepPlaceholder(i)}
-                    rows={2}
-                  />
-                  <button
-                    className="modal-edit-list__remove"
-                    onClick={() => removeListItem("procedure", i)}
-                    aria-label={T.removeStep}
-                    title={T.removeStep}
-                  >
-                    ×
-                  </button>
-                </div>
-              ))}
-              <button
-                className="modal-add-btn"
-                onClick={() => addListItem("procedure")}
-              >
-                {T.addStep}
-              </button>
-            </div>
-          ) : (
-            <ol className="modal-procedure">
-              {display.procedure.map((step, i) => (
-                <li key={i}>{step}</li>
-              ))}
-            </ol>
-          )}
-        </div>
+        {/* Footer — sticky save/cancel in edit mode */}
+        {isEditing && (
+          <div className="modal-card__footer">
+            <button className="modal-btn modal-btn--save" onClick={handleSave}>
+              {T.save}
+            </button>
+            <button
+              className="modal-btn modal-btn--cancel"
+              onClick={discardEdits}
+            >
+              {T.cancel}
+            </button>
+          </div>
+        )}
       </div>
     </div>
   );

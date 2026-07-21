@@ -6,26 +6,28 @@ import "./SlotPicker.css";
 interface SlotPickerProps {
   slotLabel: string;
   library: Meal[];
-  existingMeal: Meal | null;
+  existingMeals: Meal[]; // all meals already in this slot
   onClose: () => void;
-  onSelect: (meal: Meal) => void;
-  onEditExisting: () => void;
-  onClear: () => void;
+  onAdd: (meal: Meal) => void; // add a meal to the slot
+  onEdit: (mealIndex: number) => void; // edit a specific meal
+  onRemove: (mealIndex: number) => void; // remove a specific meal
   onCreateNew: () => void;
 }
 
 export function SlotPicker({
   slotLabel,
   library,
-  existingMeal,
+  existingMeals,
   onClose,
-  onSelect,
-  onEditExisting,
-  onClear,
+  onAdd,
+  onEdit,
+  onRemove,
   onCreateNew,
 }: SlotPickerProps) {
   const [search, setSearch] = useState("");
-  const [confirmClear, setConfirmClear] = useState(false);
+  const [confirmRemoveIndex, setConfirmRemoveIndex] = useState<number | null>(
+    null,
+  );
 
   const filtered = library.filter((m) =>
     m.name.toLowerCase().includes(search.toLowerCase()),
@@ -51,62 +53,66 @@ export function SlotPicker({
           </button>
         </div>
 
-        {/* Existing meal */}
-        {existingMeal && (
+        {/* Existing meals */}
+        {existingMeals.length > 0 && (
           <div className="slot-picker__current">
-            <div className="slot-picker__current-header">
-              <span className="slot-picker__current-label">
-                {T.currentMeal}
-              </span>
-            </div>
-            <div className="slot-picker__current-meal">
-              <div className="slot-picker__current-name">
-                {existingMeal.name}
-              </div>
-              <div className="slot-picker__macros-row">
-                <span>🔥 {existingMeal.macros.calories} kcal</span>
-                <span>💪 {existingMeal.macros.protein}g</span>
-                <span>🌾 {existingMeal.macros.carbohydrates}g</span>
-                <span>🥑 {existingMeal.macros.fat}g</span>
-              </div>
-              <div className="slot-picker__current-actions">
-                <button
-                  className="modal-btn modal-btn--edit"
-                  onClick={onEditExisting}
-                >
-                  {T.editMeal}
-                </button>
-                {confirmClear ? (
-                  <span className="library-item__confirm">
-                    <span className="library-item__confirm-label">
-                      {T.confirmRemove}
-                    </span>
+            <span className="slot-picker__current-label">{T.currentMeal}</span>
+            {existingMeals.map((meal, i) => (
+              <div
+                key={`${meal.id}-${i}`}
+                className="slot-picker__current-meal"
+              >
+                <div className="slot-picker__current-meal-row">
+                  <div className="slot-picker__current-meal-info">
+                    <div className="slot-picker__current-name">{meal.name}</div>
+                    <div className="slot-picker__macros-row">
+                      <span>🔥 {meal.macros.calories} kcal</span>
+                      <span>💪 {meal.macros.protein}g</span>
+                      <span>🌾 {meal.macros.carbohydrates}g</span>
+                      <span>🥑 {meal.macros.fat}g</span>
+                    </div>
+                  </div>
+                  <div className="slot-picker__current-actions">
                     <button
-                      className="modal-btn modal-btn--save library-item__confirm-yes"
-                      onClick={() => {
-                        setConfirmClear(false);
-                        onClear();
-                      }}
+                      className="modal-btn modal-btn--edit"
+                      onClick={() => onEdit(i)}
                     >
-                      {T.confirmYes}
+                      {T.editMeal}
                     </button>
                     <button
                       className="modal-btn modal-btn--cancel"
-                      onClick={() => setConfirmClear(false)}
+                      onClick={() => setConfirmRemoveIndex(i)}
                     >
-                      {T.confirmNo}
+                      {T.remove}
                     </button>
-                  </span>
-                ) : (
-                  <button
-                    className="modal-btn modal-btn--cancel"
-                    onClick={() => setConfirmClear(true)}
-                  >
-                    {T.remove}
-                  </button>
+                  </div>
+                </div>
+                {confirmRemoveIndex === i && (
+                  <div className="slot-picker__confirm">
+                    <span className="slot-picker__confirm-label">
+                      {T.confirmRemove}
+                    </span>
+                    <div className="slot-picker__confirm-actions">
+                      <button
+                        className="modal-btn modal-btn--save library-item__confirm-yes"
+                        onClick={() => {
+                          setConfirmRemoveIndex(null);
+                          onRemove(i);
+                        }}
+                      >
+                        {T.confirmYes}
+                      </button>
+                      <button
+                        className="modal-btn modal-btn--cancel"
+                        onClick={() => setConfirmRemoveIndex(null)}
+                      >
+                        {T.confirmNo}
+                      </button>
+                    </div>
+                  </div>
                 )}
               </div>
-            </div>
+            ))}
           </div>
         )}
 
@@ -130,7 +136,7 @@ export function SlotPicker({
               <li key={meal.id}>
                 <button
                   className="slot-picker__list-item"
-                  onClick={() => onSelect(meal)}
+                  onClick={() => onAdd(meal)}
                 >
                   <span className="slot-picker__list-name">{meal.name}</span>
                   <span className="slot-picker__list-macros">
@@ -143,7 +149,6 @@ export function SlotPicker({
           </ul>
         )}
 
-        {/* Create from scratch */}
         <div className="slot-picker__footer">
           <button
             className="modal-btn modal-btn--save slot-picker__create-btn"

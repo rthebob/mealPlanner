@@ -115,3 +115,36 @@
     text-transform: uppercase;
     letter-spacing: 0.06em;
 }
+
+/* "Add more" variant — smaller, less prominent */
+.meal-card--add-more {
+    min-height: 44px;
+    opacity: 0.45;
+    padding: 8px;
+}
+
+.meal-card--add-more:hover {
+    opacity: 0.85;
+}
+
+.meal-card--add-more .meal-card__add-icon {
+    font-size: 1rem;
+}
+
+.meal-card--add-more .meal-card__add-label {
+    font-size: 0.68rem;
+}
+
+/* Slot cell container */
+.slot-cell {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.slot-cell__empty-readonly {
+    color: var(--color-text-dim);
+    font-size: 0.85rem;
+    text-align: center;
+    padding: 16px 0;
+}

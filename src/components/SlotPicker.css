@@ -1,123 +1,176 @@
 .slot-picker-card {
-  max-width: 560px;
+    max-width: 560px;
 }
 
 .slot-picker__slot-label {
-  font-size: 1rem;
-  font-weight: 700;
-  color: var(--color-text);
-  flex: 1;
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--color-text);
+    flex: 1;
 }
 
 .slot-picker__current {
-  background: var(--color-surface);
-  border: 1px solid var(--color-border);
-  border-radius: 10px;
-  padding: 14px 16px;
-  margin-bottom: 20px;
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: 10px;
+    padding: 14px 16px;
+    margin-bottom: 20px;
 }
 
 .slot-picker__current-header {
-  margin-bottom: 8px;
+    margin-bottom: 8px;
 }
 
 .slot-picker__current-label {
-  font-size: 0.72rem;
-  text-transform: uppercase;
-  letter-spacing: 0.07em;
-  color: var(--color-text-dim);
+    font-size: 0.72rem;
+    text-transform: uppercase;
+    letter-spacing: 0.07em;
+    color: var(--color-text-dim);
 }
 
 .slot-picker__current-name {
-  font-size: 1rem;
-  font-weight: 600;
-  color: var(--color-text);
-  margin-bottom: 6px;
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--color-text);
+    margin-bottom: 6px;
 }
 
 .slot-picker__macros-row {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  font-size: 0.78rem;
-  color: var(--color-text-muted);
-  margin-bottom: 12px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    font-size: 0.78rem;
+    color: var(--color-text-muted);
+    margin-bottom: 0;
+}
+
+.slot-picker__current-meal {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding-top: 10px;
+    border-top: 1px solid var(--color-border);
+}
+
+.slot-picker__current-meal:first-of-type {
+    border-top: none;
+    padding-top: 0;
+}
+
+.slot-picker__current-meal-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+}
+
+.slot-picker__current-meal-info {
+    flex: 1;
+    min-width: 0;
 }
 
 .slot-picker__current-actions {
-  display: flex;
-  gap: 8px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    flex-shrink: 0;
+}
+
+.slot-picker__confirm {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    background: var(--color-bg);
+    border: 1px solid var(--color-border);
+    border-radius: 8px;
+    padding: 8px 12px;
+}
+
+.slot-picker__confirm-label {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--color-text);
+    flex: 1;
+}
+
+.slot-picker__confirm-actions {
+    display: flex;
+    gap: 8px;
+    flex-shrink: 0;
 }
 
 .slot-picker__section-title {
-  font-size: 0.78rem;
-  text-transform: uppercase;
-  letter-spacing: 0.07em;
-  color: var(--color-accent);
-  font-weight: 600;
-  margin-bottom: 10px;
+    font-size: 0.78rem;
+    text-transform: uppercase;
+    letter-spacing: 0.07em;
+    color: var(--color-accent);
+    font-weight: 600;
+    margin-bottom: 10px;
 }
 
 .slot-picker__search {
-  margin-bottom: 10px;
+    margin-bottom: 10px;
 }
 
 .slot-picker__empty-hint {
-  font-size: 0.88rem;
-  color: var(--color-text-dim);
-  margin: 12px 0 20px;
-  text-align: center;
+    font-size: 0.88rem;
+    color: var(--color-text-dim);
+    margin: 12px 0 20px;
+    text-align: center;
 }
 
 .slot-picker__list {
-  list-style: none;
-  padding: 0;
-  margin: 0 0 20px;
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  max-height: 260px;
-  overflow-y: auto;
+    list-style: none;
+    padding: 0;
+    margin: 0 0 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    max-height: 260px;
+    overflow-y: auto;
 }
 
 .slot-picker__list-item {
-  width: 100%;
-  background: var(--color-surface);
-  border: 1px solid var(--color-border);
-  border-radius: 8px;
-  padding: 10px 14px;
-  cursor: pointer;
-  text-align: left;
-  color: var(--color-text);
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  transition: border-color 0.15s, background 0.15s;
+    width: 100%;
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: 8px;
+    padding: 10px 14px;
+    cursor: pointer;
+    text-align: left;
+    color: var(--color-text);
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    transition:
+        border-color 0.15s,
+        background 0.15s;
 }
 
 .slot-picker__list-item:hover {
-  border-color: var(--color-accent);
-  background: var(--color-card);
+    border-color: var(--color-accent);
+    background: var(--color-card);
 }
 
 .slot-picker__list-name {
-  font-size: 0.92rem;
-  font-weight: 600;
+    font-size: 0.92rem;
+    font-weight: 600;
 }
 
 .slot-picker__list-macros {
-  font-size: 0.75rem;
-  color: var(--color-text-dim);
+    font-size: 0.75rem;
+    color: var(--color-text-dim);
 }
 
 .slot-picker__footer {
-  display: flex;
-  justify-content: flex-end;
-  padding-top: 4px;
+    display: flex;
+    justify-content: flex-end;
+    padding-top: 4px;
 }
 
 .slot-picker__create-btn {
-  width: 100%;
-  justify-content: center;
-  text-align: center;
+    width: 100%;
+    justify-content: center;
+    text-align: center;
 }

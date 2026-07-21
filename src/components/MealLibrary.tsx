@@ -1,6 +1,7 @@
 import { useState } from "react";
 import type { Meal, Macros } from "../types";
 import { T } from "../i18n";
+import { MealModal } from "./MealModal";
 import "./MealLibrary.css";
 
 interface MealLibraryProps {
@@ -13,7 +14,6 @@ function emptyMeal(): Meal {
   return {
     id: crypto.randomUUID(),
     name: "",
-    description: "",
     ingredients: [],
     procedure: [],
     macros: { calories: 0, protein: 0, carbohydrates: 0, fat: 0 },
@@ -76,98 +76,93 @@ function MealForm({ initial, onSave, onCancel }: MealFormProps) {
   ] as const;
 
   return (
-    <div className="library-form">
-      <input
-        className="modal-input modal-input--title"
-        value={draft.name}
-        onChange={(e) => setField("name", e.target.value)}
-        placeholder={T.mealNamePlaceholder}
-      />
-      <textarea
-        className="modal-input modal-input--description"
-        value={draft.description}
-        onChange={(e) => setField("description", e.target.value)}
-        placeholder={T.descriptionPlaceholder}
-        rows={2}
-      />
+    <>
+      <div className="modal-card__body library-form">
+        <input
+          className="modal-input modal-input--title"
+          value={draft.name}
+          onChange={(e) => setField("name", e.target.value)}
+          placeholder={T.mealNamePlaceholder}
+        />
 
-      <div className="library-form__macros">
-        {MACRO_DEFS.map(({ key, label, unit }) => (
-          <div key={key} className="library-form__macro-field">
-            <label className="library-form__macro-label">
-              {label} ({unit})
-            </label>
-            <input
-              className="modal-input"
-              type="number"
-              min={0}
-              value={draft.macros[key]}
-              onChange={(e) => setMacro(key, e.target.value)}
-              aria-label={label}
-            />
-          </div>
-        ))}
+        <div className="library-form__macros">
+          {MACRO_DEFS.map(({ key, label, unit }) => (
+            <div key={key} className="library-form__macro-field">
+              <label className="library-form__macro-label">
+                {label} ({unit})
+              </label>
+              <input
+                className="modal-input"
+                type="number"
+                min={0}
+                value={draft.macros[key]}
+                onChange={(e) => setMacro(key, e.target.value)}
+                aria-label={label}
+              />
+            </div>
+          ))}
+        </div>
+
+        <div className="library-form__section-title">{T.ingredients}</div>
+        <div className="modal-edit-list">
+          {draft.ingredients.map((item, i) => (
+            <div key={i} className="modal-edit-list__row">
+              <input
+                className="modal-input"
+                value={item}
+                onChange={(e) => setListItem("ingredients", i, e.target.value)}
+                placeholder={T.ingredientPlaceholder(i)}
+              />
+              <button
+                className="modal-edit-list__remove"
+                onClick={() => removeListItem("ingredients", i)}
+                aria-label={T.removeIngredient}
+              >
+                ×
+              </button>
+            </div>
+          ))}
+          <button
+            className="modal-add-btn"
+            onClick={() => addListItem("ingredients")}
+          >
+            {T.addIngredient}
+          </button>
+        </div>
+
+        <div className="library-form__section-title" style={{ marginTop: 16 }}>
+          {T.procedure}
+        </div>
+        <div className="modal-edit-list">
+          {draft.procedure.map((step, i) => (
+            <div key={i} className="modal-edit-list__row">
+              <span className="modal-edit-list__step-num">{i + 1}.</span>
+              <textarea
+                className="modal-input modal-input--step"
+                value={step}
+                onChange={(e) => setListItem("procedure", i, e.target.value)}
+                placeholder={T.stepPlaceholder(i)}
+                rows={2}
+              />
+              <button
+                className="modal-edit-list__remove"
+                onClick={() => removeListItem("procedure", i)}
+                aria-label={T.removeStep}
+              >
+                ×
+              </button>
+            </div>
+          ))}
+          <button
+            className="modal-add-btn"
+            onClick={() => addListItem("procedure")}
+          >
+            {T.addStep}
+          </button>
+        </div>
       </div>
 
-      <div className="library-form__section-title">{T.ingredients}</div>
-      <div className="modal-edit-list">
-        {draft.ingredients.map((item, i) => (
-          <div key={i} className="modal-edit-list__row">
-            <input
-              className="modal-input"
-              value={item}
-              onChange={(e) => setListItem("ingredients", i, e.target.value)}
-              placeholder={T.ingredientPlaceholder(i)}
-            />
-            <button
-              className="modal-edit-list__remove"
-              onClick={() => removeListItem("ingredients", i)}
-              aria-label={T.removeIngredient}
-            >
-              ×
-            </button>
-          </div>
-        ))}
-        <button
-          className="modal-add-btn"
-          onClick={() => addListItem("ingredients")}
-        >
-          {T.addIngredient}
-        </button>
-      </div>
-
-      <div className="library-form__section-title" style={{ marginTop: 16 }}>
-        {T.procedure}
-      </div>
-      <div className="modal-edit-list">
-        {draft.procedure.map((step, i) => (
-          <div key={i} className="modal-edit-list__row">
-            <span className="modal-edit-list__step-num">{i + 1}.</span>
-            <textarea
-              className="modal-input modal-input--step"
-              value={step}
-              onChange={(e) => setListItem("procedure", i, e.target.value)}
-              placeholder={T.stepPlaceholder(i)}
-              rows={2}
-            />
-            <button
-              className="modal-edit-list__remove"
-              onClick={() => removeListItem("procedure", i)}
-              aria-label={T.removeStep}
-            >
-              ×
-            </button>
-          </div>
-        ))}
-        <button
-          className="modal-add-btn"
-          onClick={() => addListItem("procedure")}
-        >
-          {T.addStep}
-        </button>
-      </div>
-
-      <div className="library-form__actions">
+      <div className="modal-card__footer">
         <button
           className="modal-btn modal-btn--save"
           onClick={() => onSave(draft)}
@@ -178,28 +173,26 @@ function MealForm({ initial, onSave, onCancel }: MealFormProps) {
           {T.cancel}
         </button>
       </div>
-    </div>
+    </>
   );
 }
 
 export function MealLibrary({ library, onClose, onChange }: MealLibraryProps) {
   const [showNewForm, setShowNewForm] = useState(false);
-  const [editingId, setEditingId] = useState<string | null>(null);
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
+  const [viewingMeal, setViewingMeal] = useState<{
+    meal: Meal;
+    editMode: boolean;
+  } | null>(null);
 
   function handleAdd(meal: Meal) {
     onChange([...library, meal]);
     setShowNewForm(false);
   }
 
-  function handleUpdate(updated: Meal) {
-    onChange(library.map((m) => (m.id === updated.id ? updated : m)));
-    setEditingId(null);
-  }
-
   function handleDelete(id: string) {
     onChange(library.filter((m) => m.id !== id));
-    if (editingId === id) setEditingId(null);
+    setViewingMeal((prev) => (prev?.meal.id === id ? null : prev));
   }
 
   return (
@@ -239,18 +232,21 @@ export function MealLibrary({ library, onClose, onChange }: MealLibraryProps) {
         {library.length === 0 && !showNewForm ? (
           <p className="library-empty">{T.noMealsYet}</p>
         ) : (
-          <ul className="library-list">
-            {library.map((meal) => (
-              <li key={meal.id} className="library-item">
-                {editingId === meal.id ? (
-                  <MealForm
-                    initial={meal}
-                    onSave={handleUpdate}
-                    onCancel={() => setEditingId(null)}
-                  />
-                ) : (
-                  <>
-                    <div className="library-item__info">
+          !showNewForm && (
+            <ul className="library-list">
+              {library.map((meal) => (
+                <li key={meal.id} className="library-item">
+                  <div className="library-item__row">
+                    <div
+                      className="library-item__info library-item__info--clickable"
+                      onClick={() => setViewingMeal({ meal, editMode: false })}
+                      role="button"
+                      tabIndex={0}
+                      onKeyDown={(e) =>
+                        e.key === "Enter" &&
+                        setViewingMeal({ meal, editMode: false })
+                      }
+                    >
                       <div className="library-item__name">{meal.name}</div>
                       <div className="library-item__macros">
                         🔥 {meal.macros.calories} kcal · 💪{" "}
@@ -261,52 +257,64 @@ export function MealLibrary({ library, onClose, onChange }: MealLibraryProps) {
                     <div className="library-item__actions">
                       <button
                         className="modal-btn modal-btn--edit"
-                        onClick={() => {
-                          setEditingId(meal.id);
-                          setConfirmDeleteId(null);
-                        }}
+                        onClick={() => setViewingMeal({ meal, editMode: true })}
                         aria-label={T.editMeal}
                       >
                         {T.editMealBtn}
                       </button>
-                      {confirmDeleteId === meal.id ? (
-                        <span className="library-item__confirm">
-                          <span className="library-item__confirm-label">
-                            {T.confirmDelete}
-                          </span>
-                          <button
-                            className="modal-btn modal-btn--save library-item__confirm-yes"
-                            onClick={() => {
-                              handleDelete(meal.id);
-                              setConfirmDeleteId(null);
-                            }}
-                          >
-                            {T.confirmYes}
-                          </button>
-                          <button
-                            className="modal-btn modal-btn--cancel"
-                            onClick={() => setConfirmDeleteId(null)}
-                          >
-                            {T.confirmNo}
-                          </button>
-                        </span>
-                      ) : (
+                      <button
+                        className="modal-btn modal-btn--cancel"
+                        onClick={() => setConfirmDeleteId(meal.id)}
+                        aria-label="Smazat"
+                      >
+                        {T.deleteMealBtn}
+                      </button>
+                    </div>
+                  </div>
+                  {confirmDeleteId === meal.id && (
+                    <div className="library-item__confirm">
+                      <span className="library-item__confirm-label">
+                        {T.confirmDelete}
+                      </span>
+                      <div className="library-item__confirm-actions">
+                        <button
+                          className="modal-btn modal-btn--save library-item__confirm-yes"
+                          onClick={() => {
+                            handleDelete(meal.id);
+                            setConfirmDeleteId(null);
+                          }}
+                        >
+                          {T.confirmYes}
+                        </button>
                         <button
                           className="modal-btn modal-btn--cancel"
-                          onClick={() => setConfirmDeleteId(meal.id)}
-                          aria-label="Smazat"
+                          onClick={() => setConfirmDeleteId(null)}
                         >
-                          {T.deleteMealBtn}
+                          {T.confirmNo}
                         </button>
-                      )}
+                      </div>
                     </div>
-                  </>
-                )}
-              </li>
-            ))}
-          </ul>
+                  )}
+                </li>
+              ))}
+            </ul>
+          )
         )}
       </div>
+
+      {viewingMeal && (
+        <MealModal
+          meal={viewingMeal.meal}
+          initialEditMode={viewingMeal.editMode}
+          onClose={() => setViewingMeal(null)}
+          onSave={(updated) => {
+            onChange(library.map((m) => (m.id === updated.id ? updated : m)));
+            setViewingMeal((prev) =>
+              prev ? { ...prev, meal: updated, editMode: false } : null,
+            );
+          }}
+        />
+      )}
     </div>
   );
 }

@@ -10,7 +10,6 @@ export type MacroGoals = Macros;
 export interface Meal {
   id: string;
   name: string;
-  description: string;
   imageUrl?: string;
   ingredients: string[];
   procedure: string[];
@@ -19,11 +18,11 @@ export interface Meal {
 
 export interface DayPlan {
   day: string;
-  breakfast: Meal | null;
-  morningSnack: Meal | null;
-  lunch: Meal | null;
-  afternoonSnack: Meal | null;
-  dinner: Meal | null;
+  breakfast: Meal[];
+  morningSnack: Meal[];
+  lunch: Meal[];
+  afternoonSnack: Meal[];
+  dinner: Meal[];
 }
 
 // History: keyed by ISO week string e.g. "2025-W28"

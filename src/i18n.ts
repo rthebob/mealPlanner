@@ -4,6 +4,7 @@ export const T = {
   appSubtitle: "Naplánujte svůj týden, jezte zdravě každý den",
   library: "📚 Knihovna",
   export: "⬇ Export",
+  exportLibrary: "⬇ Export knihovny",
   import: "⬆ Import",
   show: "Zobrazit:",
   days: (n: number) => `${n} dní`,
@@ -36,7 +37,8 @@ export const T = {
   removeStep: "Odebrat krok",
 
   // SlotPicker
-  currentMeal: "Aktuální jídlo",
+  currentMeal: "Aktuální jídla",
+  addAnotherMeal: "+ Přidat další jídlo",
   chooseFromLibrary: "Vybrat z knihovny",
   searchPlaceholder: "Hledat jídla…",
   noMealsInLibrary: "Knihovna je prázdná. Přidejte jídla v Knihovně.",
