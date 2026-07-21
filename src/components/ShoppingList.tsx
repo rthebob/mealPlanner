@@ -289,44 +289,44 @@ export default function ShoppingList({
           </div>
         </div>
 
-        {hasContent && (
-          <div className="modal-card__footer">
-            {confirmClear ? (
-              <>
-                <span className="shopping-clear-confirm__label">
-                  {T.confirmDelete}
-                </span>
-                <button
-                  className="modal-btn shopping-clear-btn"
-                  onClick={() => {
-                    onClear();
-                    setConfirmClear(false);
-                  }}
-                >
-                  {T.confirmYes}
-                </button>
-                <button
-                  className="modal-btn modal-btn--cancel"
-                  onClick={() => setConfirmClear(false)}
-                >
-                  {T.confirmNo}
-                </button>
-              </>
-            ) : (
-              <>
+        <div className="modal-card__footer">
+          {confirmClear ? (
+            <>
+              <span className="shopping-clear-confirm__label">
+                {T.confirmDelete}
+              </span>
+              <button
+                className="modal-btn shopping-clear-btn"
+                onClick={() => {
+                  onClear();
+                  setConfirmClear(false);
+                }}
+              >
+                {T.confirmYes}
+              </button>
+              <button
+                className="modal-btn modal-btn--cancel"
+                onClick={() => setConfirmClear(false)}
+              >
+                {T.confirmNo}
+              </button>
+            </>
+          ) : (
+            <>
+              {hasContent && (
                 <button
                   className="modal-btn shopping-clear-btn"
                   onClick={() => setConfirmClear(true)}
                 >
                   {T.clearList}
                 </button>
-                <button className="modal-btn modal-btn--edit" onClick={onShare}>
-                  {T.shareBasket}
-                </button>
-              </>
-            )}
-          </div>
-        )}
+              )}
+              <button className="modal-btn modal-btn--edit" onClick={onShare}>
+                {T.shareBasket}
+              </button>
+            </>
+          )}
+        </div>
       </div>
     </div>
   );
