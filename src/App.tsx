@@ -317,7 +317,6 @@ function App() {
     try {
       const vm = localStorage.getItem("mealplanner-viewmode");
       if (vm === "day") {
-        const nd = Number(localStorage.getItem("mealplanner-numdays") ?? 3);
         const jsDow = new Date().getDay();
         const todayDow = jsDow === 0 ? 6 : jsDow - 1;
         return todayDow;
