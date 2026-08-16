@@ -71,6 +71,10 @@ export function MealModal({
   }, [onClose, isEditing]);
 
   function discardEdits() {
+    if (initialEditMode) {
+      onClose();
+      return;
+    }
     const reset = {
       ...meal,
       serves: meal.serves ?? 1,

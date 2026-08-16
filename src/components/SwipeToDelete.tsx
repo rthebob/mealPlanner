@@ -14,11 +14,11 @@ export function SwipeToDelete({ onDelete, deleteLabel = "🗑", children }: Swip
   const [offsetX, setOffsetX] = useState(0);
   const [swiped, setSwiped] = useState(false);
   const startX = useRef<number | null>(null);
-  const dragging = useRef(false);
+  const isDragging = useRef(false);
 
   function handleTouchStart(e: React.TouchEvent) {
     startX.current = e.touches[0].clientX;
-    dragging.current = false;
+    isDragging.current = false;
   }
 
   function handleTouchMove(e: React.TouchEvent) {
@@ -29,12 +29,12 @@ export function SwipeToDelete({ onDelete, deleteLabel = "🗑", children }: Swip
       setSwiped(false);
       return;
     }
-    dragging.current = true;
+    isDragging.current = true;
     setOffsetX(Math.max(dx, -DELETE_REVEAL));
   }
 
   function handleTouchEnd() {
-    if (!dragging.current) return;
+    if (!isDragging.current) return;
     if (offsetX <= -SWIPE_THRESHOLD) {
       setOffsetX(-DELETE_REVEAL);
       setSwiped(true);
@@ -42,7 +42,7 @@ export function SwipeToDelete({ onDelete, deleteLabel = "🗑", children }: Swip
       setOffsetX(0);
       setSwiped(false);
     }
-    dragging.current = false;
+    isDragging.current = false;
   }
 
   function close() {
@@ -52,28 +52,30 @@ export function SwipeToDelete({ onDelete, deleteLabel = "🗑", children }: Swip
 
   return (
     <div className="swipe-delete-wrapper">
-      <div className="swipe-delete-action" aria-hidden="true">
-        <button
-          className="swipe-delete-action__btn"
-          onClick={() => { close(); onDelete(); }}
-          tabIndex={swiped ? 0 : -1}
-          aria-label={deleteLabel}
-        >
-          🗑
-        </button>
-      </div>
+      {/* Inner row: content + action sit side by side; row slides via translateX */}
       <div
-        className="swipe-delete-content"
-        style={{
-          transform: `translateX(${offsetX}px)`,
-          transition: dragging.current ? "none" : "transform 0.25s ease",
-        }}
+        className="swipe-delete-row"
+        style={{ transform: `translateX(${offsetX}px)`, transition: "transform 0.25s ease" }}
         onTouchStart={handleTouchStart}
         onTouchMove={handleTouchMove}
         onTouchEnd={handleTouchEnd}
-        onClick={swiped ? close : undefined}
       >
-        {children}
+        <div
+          className="swipe-delete-content"
+          onClickCapture={swiped ? (e) => { e.stopPropagation(); e.preventDefault(); close(); } : undefined}
+        >
+          {children}
+        </div>
+        <div className="swipe-delete-action" aria-hidden="true">
+          <button
+            className="swipe-delete-action__btn"
+            onClick={() => { close(); onDelete(); }}
+            tabIndex={swiped ? 0 : -1}
+            aria-label={deleteLabel}
+          >
+            🗑
+          </button>
+        </div>
       </div>
     </div>
   );

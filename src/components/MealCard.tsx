@@ -45,7 +45,6 @@ export function MealCard({ meal, onClick, onSwipeDelete, compact }: MealCardProp
 interface SlotCellProps {
   meals: Meal[];
   onMealClick: (mealIndex: number) => void;
-  onMealDelete?: (mealIndex: number) => void;
   onAdd: () => void;
   compact?: boolean;
   readOnly?: boolean;
@@ -54,7 +53,6 @@ interface SlotCellProps {
 export function SlotCell({
   meals: mealsProp,
   onMealClick,
-  onMealDelete,
   onAdd,
   compact,
   readOnly,
@@ -67,7 +65,6 @@ export function SlotCell({
           key={meal.id}
           meal={meal}
           onClick={() => onMealClick(i)}
-          onSwipeDelete={!readOnly && onMealDelete ? () => onMealDelete(i) : undefined}
           compact={compact}
         />
       ))}

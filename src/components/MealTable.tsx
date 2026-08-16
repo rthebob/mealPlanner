@@ -10,11 +10,6 @@ interface MealTableProps {
     mealKey: keyof Omit<DayPlan, "day">,
     mealIndex: number | null,
   ) => void;
-  onCellDelete?: (
-    dayIndex: number,
-    mealKey: keyof Omit<DayPlan, "day">,
-    mealIndex: number,
-  ) => void;
   goals: MacroGoals;
   readOnly?: boolean;
 }
@@ -173,7 +168,6 @@ function DayTotals({ day, goals }: { day: DayPlan; goals: MacroGoals }) {
 export function MealTable({
   days,
   onCellClick,
-  onCellDelete,
   goals,
   readOnly,
 }: MealTableProps) {
@@ -213,11 +207,6 @@ export function MealTable({
                     meals={d[key]}
                     onMealClick={(mealIndex) =>
                       !readOnly && onCellClick(dayIndex, key, mealIndex)
-                    }
-                    onMealDelete={
-                      !readOnly && onCellDelete
-                        ? (mealIndex) => onCellDelete(dayIndex, key, mealIndex)
-                        : undefined
                     }
                     onAdd={() => !readOnly && onCellClick(dayIndex, key, null)}
                     compact={isSnack}

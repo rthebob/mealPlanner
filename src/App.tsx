@@ -523,20 +523,6 @@ function App() {
     });
   }
 
-  function handleCellDelete(
-    dayIndex: number,
-    mealKey: MealKey,
-    mealIndex: number,
-  ) {
-    const realIndex = viewMode === "day" ? clampedFocused : (weekViewStart + dayIndex) % 7;
-    updateWeekPlan((prev) => {
-      const copy = prev.map((d) => ({ ...d }));
-      const meals = copy[realIndex][mealKey].filter((_, i) => i !== mealIndex);
-      copy[realIndex] = { ...copy[realIndex], [mealKey]: meals };
-      return copy;
-    });
-  }
-
   function handleSlotAdd(meal: Meal) {
     addMealToSlot(meal);
     setShowSlotPicker(false);
@@ -589,7 +575,12 @@ function App() {
   function handleModalClose() {
     setEditingMeal(null);
     setCreatingNew(false);
-    setActiveSlot(null);
+    // If we were editing an existing slot meal, reopen the slot picker
+    if (!creatingNew && activeSlot) {
+      setShowSlotPicker(true);
+    } else {
+      setActiveSlot(null);
+    }
   }
 
   function updateShoppingList(next: ShoppingListEntry[]) {
@@ -956,7 +947,6 @@ function App() {
         <MealTable
           days={visibleDays}
           onCellClick={handleCellClick}
-          onCellDelete={handleCellDelete}
           goals={goals}
           readOnly={!isCurrentWeek}
         />

@@ -26,6 +26,7 @@ export function SlotPicker({
   onCreateNew,
 }: SlotPickerProps) {
   const [search, setSearch] = useState("");
+  const [confirmRemoveIndex, setConfirmRemoveIndex] = useState<number | null>(null);
 
   const filtered = library.filter((m) =>
     m.name.toLowerCase().includes(search.toLowerCase()),
@@ -75,9 +76,34 @@ export function SlotPicker({
                       >
                         {T.editMeal}
                       </button>
+                      <button
+                        className="modal-btn modal-btn--cancel mobile-hidden"
+                        onClick={() => setConfirmRemoveIndex(i)}
+                      >
+                        {T.remove}
+                      </button>
                     </div>
                   </div>
                 </div>
+                {confirmRemoveIndex === i && (
+                  <div className="slot-picker__confirm">
+                    <span className="slot-picker__confirm-label">{T.confirmRemove}</span>
+                    <div className="slot-picker__confirm-actions">
+                      <button
+                        className="modal-btn modal-btn--save library-item__confirm-yes"
+                        onClick={() => { setConfirmRemoveIndex(null); onRemove(i); }}
+                      >
+                        {T.confirmYes}
+                      </button>
+                      <button
+                        className="modal-btn modal-btn--cancel"
+                        onClick={() => setConfirmRemoveIndex(null)}
+                      >
+                        {T.confirmNo}
+                      </button>
+                    </div>
+                  </div>
+                )}
               </SwipeToDelete>
             ))}
           </div>

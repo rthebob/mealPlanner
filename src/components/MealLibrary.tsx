@@ -323,6 +323,7 @@ export function MealLibrary({
   const [showNewForm, setShowNewForm] = useState(false);
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState<"all" | "favourites" | MealType>("all");
+  const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
   const [viewingMeal, setViewingMeal] = useState<{
     meal: Meal;
     editMode: boolean;
@@ -613,13 +614,32 @@ export function MealLibrary({
                             </button>
                             <button
                               className="modal-btn modal-btn--cancel mobile-hidden"
-                              onClick={() => handleDelete(meal.id)}
+                              onClick={() => setConfirmDeleteId(meal.id)}
                               aria-label="Smazat"
                             >
                               {T.deleteMealBtn}
                             </button>
                           </div>
                         </div>
+                        {confirmDeleteId === meal.id && (
+                          <div className="library-item__confirm">
+                            <span className="library-item__confirm-label">{T.confirmDelete}</span>
+                            <div className="library-item__confirm-actions">
+                              <button
+                                className="modal-btn modal-btn--save library-item__confirm-yes"
+                                onClick={() => { handleDelete(meal.id); setConfirmDeleteId(null); }}
+                              >
+                                {T.confirmYes}
+                              </button>
+                              <button
+                                className="modal-btn modal-btn--cancel"
+                                onClick={() => setConfirmDeleteId(null)}
+                              >
+                                {T.confirmNo}
+                              </button>
+                            </div>
+                          </div>
+                        )}
                         </div>
                         </SwipeToDelete>
                       </li>

@@ -50,6 +50,7 @@
     gap: 8px;
     padding-top: 10px;
     border-top: 1px solid var(--color-border);
+    background: var(--color-surface);
 }
 
 .slot-picker__current-meal:first-of-type {
