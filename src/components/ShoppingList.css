@@ -128,7 +128,8 @@
     background: var(--color-surface);
     width: 100%;
     box-sizing: border-box;
-    padding: 4px 0;
+    padding: 6px 12px;
+    border-radius: 8px;
 }
 
 .shopping-adhoc-form {

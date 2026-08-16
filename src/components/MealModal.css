@@ -464,6 +464,13 @@
     color: #fff;
 }
 
+.serves-row__confirm-btn {
+    margin-left: 4px;
+    padding: 4px 10px;
+    font-size: 0.8rem;
+    height: 28px;
+}
+
 .modal-serves-label {
     font-size: 0.72rem;
     color: var(--color-text-dim);

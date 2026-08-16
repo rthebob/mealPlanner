@@ -570,7 +570,11 @@ function App() {
     }
     setEditingMeal(null);
     setCreatingNew(false);
-    setActiveSlot(null);
+    if (!creatingNew && activeSlot) {
+      setShowSlotPicker(true);
+    } else {
+      setActiveSlot(null);
+    }
   }
   function handleModalClose() {
     setEditingMeal(null);
@@ -588,17 +592,19 @@ function App() {
     try {
       localStorage.setItem("mealplanner-shopping", JSON.stringify(next));
     } catch {}
-    // When clearing (empty list) also wipe checked and expanded state
-    if (next.length === 0) {
-      setShoppingChecked(new Set());
-      setShoppingExpanded(new Set());
-      setShoppingAdHoc([]);
-      try {
-        localStorage.removeItem("mealplanner-shopping-checked");
-        localStorage.removeItem("mealplanner-shopping-expanded");
-        localStorage.removeItem("mealplanner-shopping-adhoc");
-      } catch {}
-    }
+  }
+
+  function clearShoppingList() {
+    setShoppingList([]);
+    setShoppingChecked(new Set());
+    setShoppingExpanded(new Set());
+    setShoppingAdHoc([]);
+    try {
+      localStorage.removeItem("mealplanner-shopping");
+      localStorage.removeItem("mealplanner-shopping-checked");
+      localStorage.removeItem("mealplanner-shopping-expanded");
+      localStorage.removeItem("mealplanner-shopping-adhoc");
+    } catch {}
   }
 
   function toggleShoppingChecked(key: string) {
@@ -1013,7 +1019,7 @@ function App() {
           onRemoveMeal={(id) =>
             updateShoppingList(shoppingList.filter((e) => e.meal.id !== id))
           }
-          onClear={() => updateShoppingList([])}
+          onClear={() => clearShoppingList()}
           onUpdateServes={(id, serves) =>
             updateShoppingList(
               shoppingList.map((e) =>

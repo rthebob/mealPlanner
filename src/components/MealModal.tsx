@@ -276,7 +276,7 @@ export function MealModal({
               }}
               aria-label="-1 porce"
             >
-              −
+              &minus;
             </button>
             <input
               className="modal-input serves-row__input"
@@ -301,6 +301,32 @@ export function MealModal({
             >
               +
             </button>
+            {!isEditing && viewServes !== meal.serves && (
+              <button
+                className="modal-btn modal-btn--save serves-row__confirm-btn"
+                onClick={() => {
+                  const ratio = viewServes / (meal.serves ?? 1);
+                  onSave({
+                    ...meal,
+                    serves: viewServes,
+                    macros: {
+                      calories: Math.round(meal.macros.calories * ratio),
+                      protein: Math.round(meal.macros.protein * ratio),
+                      carbohydrates: Math.round(meal.macros.carbohydrates * ratio),
+                      fat: Math.round(meal.macros.fat * ratio),
+                    },
+                    ingredients: meal.ingredients.map((ing) => {
+                      const num = parseFloat(ing.amount);
+                      return isNaN(num)
+                        ? ing
+                        : { ...ing, amount: parseFloat((num * ratio).toFixed(2)).toString() };
+                    }),
+                  });
+                }}
+              >
+                {T.save}
+              </button>
+            )}
           </div>
 
           {/* Meal type badges — edit mode only */}
