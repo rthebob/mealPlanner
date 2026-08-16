@@ -784,9 +784,17 @@ function App() {
                   <button
                     className="app-settings-item"
                     onClick={() => {
+                      const merged = library.map((m) => {
+                        const def = DEFAULT_MEAL_LIBRARY.find((d) => d.id === m.id);
+                        // Update procedure if the stored one is empty but default has one
+                        if (def && m.procedure.length === 0 && def.procedure.length > 0) {
+                          return { ...m, procedure: def.procedure };
+                        }
+                        return m;
+                      });
                       const existingIds = new Set(library.map((m) => m.id));
                       const toAdd = DEFAULT_MEAL_LIBRARY.filter((m) => !existingIds.has(m.id));
-                      if (toAdd.length > 0) updateLibrary([...library, ...toAdd]);
+                      updateLibrary([...merged, ...toAdd]);
                       setShowSettings(false);
                     }}
                   >
