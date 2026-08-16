@@ -176,7 +176,11 @@ export const DEFAULT_MEAL_LIBRARY: Meal[] = [
       { name: "Nektarinka", amount: "1", unit: "ks" },
       { name: "Šunka vepřová", amount: "70", unit: "g" },
     ],
-    procedure: [],
+    procedure: [
+      "Žitný chléb nakrájíme na plátky.",
+      "Na každý plátek položíme plátky mozzarelly a šunky.",
+      "Podáváme s nektarinkou nakrájenou na plátky nebo celou.",
+    ],
     macros: { calories: 566, protein: 41, carbohydrates: 44, fat: 24 },
   },
   {

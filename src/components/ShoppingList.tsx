@@ -101,7 +101,7 @@ export default function ShoppingList({
                         <div className="shopping-meal__inner">
                           <div className="shopping-meal__header">
                             <span className="shopping-meal__name shopping-meal__name--done">
-                              &#x2713; {meal.name}
+                              ✓ {meal.name}
                             </span>
                             <div style={{ display: "flex", gap: 6 }}>
                               <button
@@ -131,7 +131,7 @@ export default function ShoppingList({
                       <div className="shopping-meal__inner">
                         <div className="shopping-meal__header">
                           <span className={`shopping-meal__name${done ? " shopping-meal__name--done" : ""}`}>
-                            {done && "&#x2713; "}
+                            {done && "✓ "}
                             {meal.name}
                           </span>
                           <div style={{ display: "flex", gap: 6 }}>
