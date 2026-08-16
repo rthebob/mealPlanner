@@ -95,9 +95,8 @@ const DEFAULT_GOALS: MacroGoals = {
   carbohydrates: 250,
   fat: 65,
 };
-const THIS_WEEK = currentWeekKey();
-
 function App() {
+  const THIS_WEEK = currentWeekKey();
   const [theme, setTheme] = useState<"dark" | "light">(() => {
     try {
       return (
@@ -119,7 +118,34 @@ function App() {
   const [weekPlan, setWeekPlan] = useState<DayPlan[]>(() => {
     try {
       const v = localStorage.getItem("mealplanner-weekplan");
-      return v ? migratePlan(JSON.parse(v)) : WEEK_PLAN;
+      if (!v) return WEEK_PLAN;
+      const storedKey = localStorage.getItem("mealplanner-weekplan-key");
+      // If the stored plan belongs to a different (past) week, archive it and
+      // start fresh so the current week begins empty.
+      if (storedKey && storedKey !== THIS_WEEK) {
+        const oldPlan = migratePlan(JSON.parse(v));
+        try {
+          const histRaw = localStorage.getItem("mealplanner-history");
+          const hist = histRaw
+            ? (JSON.parse(histRaw) as Record<string, DayPlan[]>)
+            : {};
+          if (!hist[storedKey]) {
+            hist[storedKey] = oldPlan;
+            localStorage.setItem(
+              "mealplanner-history",
+              JSON.stringify(hist),
+            );
+          }
+        } catch {}
+        localStorage.setItem("mealplanner-weekplan-key", THIS_WEEK);
+        localStorage.removeItem("mealplanner-weekplan");
+        return WEEK_PLAN;
+      }
+      // First load without a key stored — tag it for future comparisons
+      if (!storedKey) {
+        localStorage.setItem("mealplanner-weekplan-key", THIS_WEEK);
+      }
+      return migratePlan(JSON.parse(v));
     } catch {
       return WEEK_PLAN;
     }
@@ -294,11 +320,24 @@ function App() {
         const nd = Number(localStorage.getItem("mealplanner-numdays") ?? 3);
         const jsDow = new Date().getDay();
         const todayDow = jsDow === 0 ? 6 : jsDow - 1;
-        return todayDow < nd ? todayDow : 0;
+        return todayDow;
       }
     } catch {}
     return 0;
   });
+
+  const anyModalOpen =
+    showHistoryPicker ||
+    showSlotPicker ||
+    showLibrary ||
+    showShoppingList ||
+    showBasketQR ||
+    !!editingMeal;
+
+  useEffect(() => {
+    document.body.style.overflow = anyModalOpen ? "hidden" : "";
+    return () => { document.body.style.overflow = ""; };
+  }, [anyModalOpen]);
 
   function updateNumDays(n: number) {
     setNumDays(n);
@@ -312,6 +351,7 @@ function App() {
       const next = fn(prev);
       try {
         localStorage.setItem("mealplanner-weekplan", JSON.stringify(next));
+        localStorage.setItem("mealplanner-weekplan-key", THIS_WEEK);
       } catch {}
       return next;
     });
@@ -350,15 +390,24 @@ function App() {
     ? weekPlan
     : (history[viewingWeekKey!] ?? WEEK_PLAN);
 
-  const allVisibleDays = displayPlan.slice(0, isCurrentWeek ? numDays : 7);
+  // In week view, respect numDays; in day view, always show all 7 days so any day is reachable
+  const jsDow = new Date().getDay();
+  const todayDowIndex = jsDow === 0 ? 6 : jsDow - 1;
+
+  // For the current week in week view, start from today and wrap around into
+  // the next days if needed (e.g. Sun + 3 days = Sun, Mon, Tue)
+  const weekViewStart = isCurrentWeek ? todayDowIndex : 0;
+  const weekViewDays = isCurrentWeek
+    ? Array.from({ length: Math.min(numDays, 7) }, (_, i) => displayPlan[(weekViewStart + i) % 7])
+    : displayPlan.slice(0, 7);
+
+  const allVisibleDays = viewMode === "day" ? displayPlan.slice(0, 7) : weekViewDays;
   const clampedFocused = Math.min(focusedDayIndex, allVisibleDays.length - 1);
   const visibleDays =
     viewMode === "day" ? [allVisibleDays[clampedFocused]] : allVisibleDays;
 
-  const jsDow = new Date().getDay();
-  const todayDowIndex = jsDow === 0 ? 6 : jsDow - 1;
   const todayIndex =
-    isCurrentWeek && todayDowIndex < allVisibleDays.length ? todayDowIndex : -1;
+    isCurrentWeek && viewMode === "week" ? 0 : -1;
 
   // Can we go forward? Only if we're not already at the current week
   const canGoForward = !isCurrentWeek;
@@ -421,7 +470,7 @@ function App() {
     mealIndex: number | null,
   ) {
     if (!isCurrentWeek) return;
-    const realIndex = viewMode === "day" ? clampedFocused : dayIndex;
+    const realIndex = viewMode === "day" ? clampedFocused : (weekViewStart + dayIndex) % 7;
     setActiveSlot({ dayIndex: realIndex, mealKey, mealIndex });
     if (mealIndex === null) {
       setShowSlotPicker(true);
@@ -471,6 +520,20 @@ function App() {
         ...copy[activeSlot.dayIndex],
         [activeSlot.mealKey]: meals,
       };
+      return copy;
+    });
+  }
+
+  function handleCellDelete(
+    dayIndex: number,
+    mealKey: MealKey,
+    mealIndex: number,
+  ) {
+    const realIndex = viewMode === "day" ? clampedFocused : (weekViewStart + dayIndex) % 7;
+    updateWeekPlan((prev) => {
+      const copy = prev.map((d) => ({ ...d }));
+      const meals = copy[realIndex][mealKey].filter((_, i) => i !== mealIndex);
+      copy[realIndex] = { ...copy[realIndex], [mealKey]: meals };
       return copy;
     });
   }
@@ -791,7 +854,7 @@ function App() {
                 } catch {}
                 // Jump to today when switching to day view
                 setViewingWeekKey(null);
-                setFocusedDayIndex(todayDowIndex < numDays ? todayDowIndex : 0);
+                setFocusedDayIndex(todayDowIndex);
               }}
             >
               {T.viewDay}
@@ -894,6 +957,7 @@ function App() {
         <MealTable
           days={visibleDays}
           onCellClick={handleCellClick}
+          onCellDelete={handleCellDelete}
           goals={goals}
           readOnly={!isCurrentWeek}
         />

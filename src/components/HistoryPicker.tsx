@@ -31,14 +31,21 @@ function fmtDate(d: Date): string {
 
 // Current ISO week key
 export function currentWeekKey(): string {
-  const now = new Date();
-  const jan4 = new Date(now.getFullYear(), 0, 4);
-  const dayOfWeek = (jan4.getDay() + 6) % 7;
-  const startOfYear = new Date(jan4);
-  startOfYear.setDate(jan4.getDate() - dayOfWeek);
-  const diff = now.getTime() - startOfYear.getTime();
-  const week = Math.floor(diff / (7 * 24 * 3600 * 1000)) + 1;
-  return `${now.getFullYear()}-W${String(week).padStart(2, "0")}`;
+  return dateToIsoWeekKey(new Date());
+}
+
+function dateToIsoWeekKey(date: Date): string {
+  // Work in UTC-noon to avoid DST issues
+  const d = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate(), 12));
+  // Shift to Thursday of the same ISO week (ISO weeks are defined by their Thursday)
+  d.setUTCDate(d.getUTCDate() + 4 - (d.getUTCDay() || 7));
+  const year = d.getUTCFullYear();
+  const jan4 = new Date(Date.UTC(year, 0, 4, 12));
+  const dayOfWeek = (jan4.getUTCDay() + 6) % 7; // Mon=0
+  const weekOneMonday = new Date(jan4);
+  weekOneMonday.setUTCDate(jan4.getUTCDate() - dayOfWeek);
+  const week = Math.round((d.getTime() - weekOneMonday.getTime()) / (7 * 24 * 3600 * 1000)) + 1;
+  return `${year}-W${String(week).padStart(2, "0")}`;
 }
 
 // Offset a week key by +/- n weeks

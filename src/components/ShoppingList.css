@@ -10,6 +10,11 @@
 }
 
 .shopping-meal {
+    border-radius: 10px;
+    overflow: hidden;
+}
+
+.shopping-meal__inner {
     background: var(--color-surface);
     border: 1px solid var(--color-border);
     border-radius: 10px;
@@ -17,9 +22,11 @@
     display: flex;
     flex-direction: column;
     gap: 10px;
+    width: 100%;
+    box-sizing: border-box;
 }
 
-.shopping-meal--done {
+.shopping-meal--done .shopping-meal__inner {
     background: rgba(73, 154, 19, 0.12);
     border-color: #499a13;
 }
@@ -82,6 +89,8 @@
     display: flex;
     align-items: center;
     gap: 10px;
+    overflow: hidden;
+    border-radius: 6px;
 }
 
 .shopping-ingredient--bought {
@@ -110,6 +119,16 @@
     margin-top: 12px;
     padding-top: 12px;
     border-top: 1px dashed var(--color-border);
+}
+
+.shopping-adhoc__inner {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: var(--color-surface);
+    width: 100%;
+    box-sizing: border-box;
+    padding: 4px 0;
 }
 
 .shopping-adhoc-form {

@@ -8,6 +8,12 @@ body {
     margin: 0;
 }
 
+@media (pointer: coarse), (max-width: 600px) {
+    .mobile-hidden {
+        display: none !important;
+    }
+}
+
 #root {
     min-height: 100vh;
 }

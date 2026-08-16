@@ -1,16 +1,18 @@
 import type { Meal } from "../types";
 import { T } from "../i18n";
+import { SwipeToDelete } from "./SwipeToDelete";
 import "./MealCard.css";
 
 // ── Single meal card ─────────────────────────────────────────────────────────
 interface MealCardProps {
   meal: Meal;
   onClick: () => void;
+  onSwipeDelete?: () => void;
   compact?: boolean;
 }
 
-export function MealCard({ meal, onClick, compact }: MealCardProps) {
-  return (
+export function MealCard({ meal, onClick, onSwipeDelete, compact }: MealCardProps) {
+  const card = (
     <button
       className={`meal-card${compact ? " meal-card--compact" : ""}`}
       onClick={onClick}
@@ -27,13 +29,24 @@ export function MealCard({ meal, onClick, compact }: MealCardProps) {
       </div>
     </button>
   );
+
+  if (onSwipeDelete) {
+    return (
+      <SwipeToDelete onDelete={onSwipeDelete}>
+        {card}
+      </SwipeToDelete>
+    );
+  }
+
+  return card;
 }
 
 // ── Slot cell: list of meals + add button ────────────────────────────────────
 interface SlotCellProps {
   meals: Meal[];
-  onMealClick: (mealIndex: number) => void; // click existing → edit/remove
-  onAdd: () => void; // click add → SlotPicker
+  onMealClick: (mealIndex: number) => void;
+  onMealDelete?: (mealIndex: number) => void;
+  onAdd: () => void;
   compact?: boolean;
   readOnly?: boolean;
 }
@@ -41,6 +54,7 @@ interface SlotCellProps {
 export function SlotCell({
   meals: mealsProp,
   onMealClick,
+  onMealDelete,
   onAdd,
   compact,
   readOnly,
@@ -53,6 +67,7 @@ export function SlotCell({
           key={meal.id}
           meal={meal}
           onClick={() => onMealClick(i)}
+          onSwipeDelete={!readOnly && onMealDelete ? () => onMealDelete(i) : undefined}
           compact={compact}
         />
       ))}

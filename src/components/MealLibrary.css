@@ -90,6 +90,10 @@
 }
 
 .library-item {
+    list-style: none;
+}
+
+.library-item__inner {
     background: var(--color-surface);
     border: 1px solid var(--color-border);
     border-radius: 10px;
@@ -97,6 +101,8 @@
     display: flex;
     flex-direction: column;
     gap: 8px;
+    width: 100%;
+    box-sizing: border-box;
 }
 
 /* Mobile: stacked layout */

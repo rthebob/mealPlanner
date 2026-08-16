@@ -1,0 +1,40 @@
+.swipe-delete-wrapper {
+    position: relative;
+    overflow: hidden;
+    border-radius: 10px;
+    width: 100%;
+    background: #e03131;
+}
+
+.swipe-delete-action {
+    position: absolute;
+    right: 0;
+    top: 0;
+    bottom: 0;
+    width: 80px;
+    display: flex;
+    align-items: stretch;
+    z-index: 0;
+}
+
+.swipe-delete-action__btn {
+    flex: 1;
+    background: transparent;
+    border: none;
+    color: #fff;
+    font-size: 1.3rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.swipe-delete-action__btn:active {
+    background: rgba(0, 0, 0, 0.15);
+}
+
+.swipe-delete-content {
+    position: relative;
+    z-index: 1;
+    width: 100%;
+}

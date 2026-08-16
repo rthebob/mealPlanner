@@ -1,16 +1,17 @@
 import { useState } from "react";
 import type { Meal } from "../types";
 import { T } from "../i18n";
+import { SwipeToDelete } from "./SwipeToDelete";
 import "./SlotPicker.css";
 
 interface SlotPickerProps {
   slotLabel: string;
   library: Meal[];
-  existingMeals: Meal[]; // all meals already in this slot
+  existingMeals: Meal[];
   onClose: () => void;
-  onAdd: (meal: Meal) => void; // add a meal to the slot
-  onEdit: (mealIndex: number) => void; // edit a specific meal
-  onRemove: (mealIndex: number) => void; // remove a specific meal
+  onAdd: (meal: Meal) => void;
+  onEdit: (mealIndex: number) => void;
+  onRemove: (mealIndex: number) => void;
   onCreateNew: () => void;
 }
 
@@ -25,9 +26,6 @@ export function SlotPicker({
   onCreateNew,
 }: SlotPickerProps) {
   const [search, setSearch] = useState("");
-  const [confirmRemoveIndex, setConfirmRemoveIndex] = useState<number | null>(
-    null,
-  );
 
   const filtered = library.filter((m) =>
     m.name.toLowerCase().includes(search.toLowerCase()),
@@ -58,60 +56,29 @@ export function SlotPicker({
           <div className="slot-picker__current">
             <span className="slot-picker__current-label">{T.currentMeal}</span>
             {existingMeals.map((meal, i) => (
-              <div
-                key={`${meal.id}-${i}`}
-                className="slot-picker__current-meal"
-              >
-                <div className="slot-picker__current-meal-row">
-                  <div className="slot-picker__current-meal-info">
-                    <div className="slot-picker__current-name">{meal.name}</div>
-                    <div className="slot-picker__macros-row">
-                      <span>🔥 {meal.macros.calories} kcal</span>
-                      <span>💪 {meal.macros.protein}g</span>
-                      <span>🌾 {meal.macros.carbohydrates}g</span>
-                      <span>🥑 {meal.macros.fat}g</span>
+              <SwipeToDelete key={`${meal.id}-${i}`} onDelete={() => onRemove(i)}>
+                <div className="slot-picker__current-meal">
+                  <div className="slot-picker__current-meal-row">
+                    <div className="slot-picker__current-meal-info">
+                      <div className="slot-picker__current-name">{meal.name}</div>
+                      <div className="slot-picker__macros-row">
+                        <span>🔥 {meal.macros.calories} kcal</span>
+                        <span>💪 {meal.macros.protein}g</span>
+                        <span>🌾 {meal.macros.carbohydrates}g</span>
+                        <span>🥑 {meal.macros.fat}g</span>
+                      </div>
                     </div>
-                  </div>
-                  <div className="slot-picker__current-actions">
-                    <button
-                      className="modal-btn modal-btn--edit"
-                      onClick={() => onEdit(i)}
-                    >
-                      {T.editMeal}
-                    </button>
-                    <button
-                      className="modal-btn modal-btn--cancel"
-                      onClick={() => setConfirmRemoveIndex(i)}
-                    >
-                      {T.remove}
-                    </button>
+                    <div className="slot-picker__current-actions">
+                      <button
+                        className="modal-btn modal-btn--edit"
+                        onClick={() => onEdit(i)}
+                      >
+                        {T.editMeal}
+                      </button>
+                    </div>
                   </div>
                 </div>
-                {confirmRemoveIndex === i && (
-                  <div className="slot-picker__confirm">
-                    <span className="slot-picker__confirm-label">
-                      {T.confirmRemove}
-                    </span>
-                    <div className="slot-picker__confirm-actions">
-                      <button
-                        className="modal-btn modal-btn--save library-item__confirm-yes"
-                        onClick={() => {
-                          setConfirmRemoveIndex(null);
-                          onRemove(i);
-                        }}
-                      >
-                        {T.confirmYes}
-                      </button>
-                      <button
-                        className="modal-btn modal-btn--cancel"
-                        onClick={() => setConfirmRemoveIndex(null)}
-                      >
-                        {T.confirmNo}
-                      </button>
-                    </div>
-                  </div>
-                )}
-              </div>
+              </SwipeToDelete>
             ))}
           </div>
         )}
