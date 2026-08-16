@@ -2,7 +2,7 @@ import { useRef, useState, useEffect } from "react";
 import "./SwipeToDelete.css";
 
 const SWIPE_THRESHOLD = 60;
-const DELETE_REVEAL = 80;
+const DELETE_REVEAL = 88; // 80px button + 8px gap
 const DIRECTION_LOCK_THRESHOLD = 8;
 
 interface SwipeToDeleteProps {
@@ -12,18 +12,25 @@ interface SwipeToDeleteProps {
 }
 
 export function SwipeToDelete({ onDelete, deleteLabel = "🗑", children }: SwipeToDeleteProps) {
-  const [offsetX, setOffsetX] = useState(0);
   const [swiped, setSwiped] = useState(false);
   const rowRef = useRef<HTMLDivElement>(null);
+  const contentRef = useRef<HTMLDivElement>(null);
   const startX = useRef<number | null>(null);
   const startY = useRef<number | null>(null);
+  const currentOffsetX = useRef(0);
   const isDragging = useRef(false);
   const isLocked = useRef<"horizontal" | "vertical" | null>(null);
-  const offsetXRef = useRef(0);
+
+  function setTransform(x: number, animated: boolean) {
+    const el = rowRef.current;
+    if (!el) return;
+    el.style.transition = animated ? "transform 0.25s ease" : "none";
+    el.style.transform = `translateX(${x}px)`;
+    currentOffsetX.current = x;
+  }
 
   function close() {
-    setOffsetX(0);
-    offsetXRef.current = 0;
+    setTransform(0, true);
     setSwiped(false);
   }
 
@@ -36,6 +43,8 @@ export function SwipeToDelete({ onDelete, deleteLabel = "🗑", children }: Swip
       startY.current = e.touches[0].clientY;
       isDragging.current = false;
       isLocked.current = null;
+      // Remove transition immediately so drag feels instant
+      if (rowRef.current) rowRef.current.style.transition = "none";
     }
 
     function onTouchMove(e: TouchEvent) {
@@ -53,29 +62,30 @@ export function SwipeToDelete({ onDelete, deleteLabel = "🗑", children }: Swip
       e.preventDefault();
 
       if (dx > 0) {
-        setOffsetX(0);
-        offsetXRef.current = 0;
+        setTransform(0, false);
         setSwiped(false);
         return;
       }
+
       isDragging.current = true;
       const next = Math.max(dx, -DELETE_REVEAL);
-      offsetXRef.current = next;
-      setOffsetX(next);
+      // Apply directly to DOM — no React re-render
+      if (rowRef.current) {
+        rowRef.current.style.transform = `translateX(${next}px)`;
+        currentOffsetX.current = next;
+      }
     }
 
     function onTouchEnd() {
       if (isLocked.current !== "horizontal" || !isDragging.current) return;
-      if (offsetXRef.current <= -SWIPE_THRESHOLD) {
-        setOffsetX(-DELETE_REVEAL);
-        offsetXRef.current = -DELETE_REVEAL;
+      isDragging.current = false;
+      if (currentOffsetX.current <= -SWIPE_THRESHOLD) {
+        setTransform(-DELETE_REVEAL, true);
         setSwiped(true);
       } else {
-        setOffsetX(0);
-        offsetXRef.current = 0;
+        setTransform(0, true);
         setSwiped(false);
       }
-      isDragging.current = false;
     }
 
     el.addEventListener("touchstart", onTouchStart, { passive: true });
@@ -94,9 +104,10 @@ export function SwipeToDelete({ onDelete, deleteLabel = "🗑", children }: Swip
       <div
         ref={rowRef}
         className="swipe-delete-row"
-        style={{ transform: `translateX(${offsetX}px)`, transition: "transform 0.25s ease" }}
+        style={{ transform: "translateX(0)", transition: "transform 0.25s ease" }}
       >
         <div
+          ref={contentRef}
           className="swipe-delete-content"
           onClickCapture={swiped ? (e) => { e.stopPropagation(); e.preventDefault(); close(); } : undefined}
         >

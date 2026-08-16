@@ -8,15 +8,14 @@
 .swipe-delete-row {
     display: flex;
     align-items: stretch;
-    /* wide enough for content (100%) + action (80px), but wrapper clips the action */
-    width: calc(100% + 80px);
+    width: calc(100% + 80px + 8px);
+    gap: 8px;
 }
 
 .swipe-delete-content {
-    flex: 0 0 calc(100% - 80px);
-    /* fill exactly the wrapper width so action is hidden outside */
-    width: calc(100% - 80px);
-    min-width: calc(100% - 80px);
+    flex: 0 0 calc(100% - 80px - 8px);
+    width: calc(100% - 80px - 8px);
+    min-width: calc(100% - 80px - 8px);
 }
 
 .swipe-delete-action {
@@ -32,11 +31,13 @@
     border: none;
     color: #fff;
     font-size: 1.3rem;
+    line-height: 1;
+    padding: 0;
     cursor: pointer;
     display: flex;
     align-items: center;
     justify-content: center;
-    border-radius: 0 10px 10px 0;
+    border-radius: 10px 0 0 10px;
 }
 
 .swipe-delete-action__btn:active {
