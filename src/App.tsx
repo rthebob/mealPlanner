@@ -781,6 +781,17 @@ function App() {
                   >
                     {T.import}
                   </button>
+                  <button
+                    className="app-settings-item"
+                    onClick={() => {
+                      const existingIds = new Set(library.map((m) => m.id));
+                      const toAdd = DEFAULT_MEAL_LIBRARY.filter((m) => !existingIds.has(m.id));
+                      if (toAdd.length > 0) updateLibrary([...library, ...toAdd]);
+                      setShowSettings(false);
+                    }}
+                  >
+                    &#x2795; Nahrát výchozí jídla
+                  </button>
                   <div
                     className="app-settings-dropdown__title"
                     style={{ marginTop: 8 }}
