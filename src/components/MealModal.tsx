@@ -256,7 +256,7 @@ export function MealModal({
                   />
                 ) : (
                   <span className="macro-badge__value">
-                    {display.macros[key]}
+                    {Math.round(display.macros[key] * (viewServes / (display.serves ?? 1)))}
                     {unit !== "kcal" ? unit : ""}
                   </span>
                 )}
