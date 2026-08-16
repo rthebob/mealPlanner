@@ -28,8 +28,13 @@ export function SlotPicker({
   const [search, setSearch] = useState("");
   const [confirmRemoveIndex, setConfirmRemoveIndex] = useState<number | null>(null);
 
+  function normalize(s: string) {
+    return s.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+  }
+
   const filtered = library.filter((m) =>
-    m.name.toLowerCase().includes(search.toLowerCase()),
+    normalize(m.name).includes(normalize(search)) &&
+    (search.trim() !== "" || m.procedure.length > 0),
   );
 
   return (

@@ -337,6 +337,10 @@ export function MealLibrary({
 
   const menuRef = useRef<HTMLDivElement>(null);
 
+  function normalize(s: string) {
+    return s.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+  }
+
   useEffect(() => {
     if (!showShareDropdown) return;
     function handleClickOutside(e: MouseEvent) {
@@ -493,7 +497,8 @@ export function MealLibrary({
               </div>
               {library.filter(
                 (m) =>
-                  m.name.toLowerCase().includes(search.toLowerCase()) &&
+                  normalize(m.name).includes(normalize(search)) &&
+                  (search.trim() !== "" || m.procedure.length > 0) &&
                   (filter === "all" ||
                     (filter === "favourites"
                       ? m.favourite
@@ -505,7 +510,8 @@ export function MealLibrary({
                   {library
                     .filter(
                       (m) =>
-                        m.name.toLowerCase().includes(search.toLowerCase()) &&
+                        normalize(m.name).includes(normalize(search)) &&
+                        (search.trim() !== "" || m.procedure.length > 0) &&
                         (filter === "all" ||
                           (filter === "favourites"
                             ? m.favourite
